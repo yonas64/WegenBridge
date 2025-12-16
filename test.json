@@ -1,0 +1,86 @@
+{
+  "name": "MissingPersonAPI",
+  "requests": [
+    {
+      "name": "Create Missing Person",
+      "url": "http://localhost:3000/api/missing-persons/create",
+      "method": "POST",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer YOUR_JWT_TOKEN"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": {
+          "name": "John Doe",
+          "age": 30,
+          "gender": "male",
+          "lastSeenLocation": "Addis Ababa",
+          "lastSeenDate": "2025-12-01T00:00:00Z",
+          "description": "Wearing blue shirt",
+          "photoUrl": "http://example.com/photo.jpg"
+        }
+      }
+    },
+    {
+      "name": "Get All Missing Persons",
+      "url": "http://localhost:3000/api/missing-persons/get",
+      "method": "GET",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer YOUR_JWT_TOKEN"
+        }
+      ]
+    },
+    {
+      "name": "Get Missing Person By ID",
+      "url": "http://localhost:3000/api/missing-persons/{{missingPersonId}}",
+      "method": "GET",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer YOUR_JWT_TOKEN"
+        }
+      ]
+    },
+    {
+      "name": "Update Missing Person Status",
+      "url": "http://localhost:3000/api/missing-persons/{{missingPersonId}}/status",
+      "method": "PATCH",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "key": "Authorization",
+          "value": "Bearer YOUR_JWT_TOKEN"
+        }
+      ],
+      "body": {
+        "type": "json",
+        "raw": {
+          "status": "found"
+        }
+      }
+    },
+    {
+      "name": "Delete Missing Person",
+      "url": "http://localhost:3000/api/missing-persons/{{missingPersonId}}",
+      "method": "DELETE",
+      "headers": [
+        {
+          "key": "Authorization",
+          "value": "Bearer YOUR_JWT_TOKEN"
+        }
+      ]
+    }
+  ]
+}

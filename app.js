@@ -5,6 +5,8 @@ const userRoutes = require('./routes/user.routes');
 const authRoutes = require('./routes/auth.routes');
 const missingPersonRoutes = require('./routes/missingPerson.routes');
 const sightingRoutes = require('./routes/sighting.routes');
+const swaggerUI = require('swagger-ui-express');
+const swaggerDocs = require('./swagger');
 const app = express();
 
 // Connect to MongoDB
@@ -13,7 +15,8 @@ const app = express();
 // Middleware
 app.use(express.json());
 app.set('view engine', 'ejs');
-
+//swagger
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);

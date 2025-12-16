@@ -2,26 +2,26 @@ const Sighting = require("../models/sighting.model");
 const MissingPerson = require("../models/missingPerson.model");
 
 // Report a sighting
-exports.createSighting = async (req, res) => {
+exports.createSighting =  (req, res) => {
   try {
     const { missingPersonId, location, sightingDate, description, photoUrl } = req.body;
 
     // Check if missing person exists
-    const missingPerson = await MissingPerson.findById(missingPersonId);
+    const missingPerson =  MissingPerson.findById(missingPersonId);
     if (!missingPerson) {
       return res.status(404).json({ message: "Missing person not found" });
     }
 
     const newSighting = new Sighting({
       missingPerson: missingPersonId,
-     reportedBy: req.user.id, // from auth middleware
+   //  reportedBy: req.user.id, // from auth middleware
       location,
       sightingDate,
       description,
       photoUrl
     });
 
-    await newSighting.save();
+     newSighting.save();
     res.status(201).json(newSighting);
 
   } catch (error) {
