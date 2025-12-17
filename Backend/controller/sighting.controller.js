@@ -7,14 +7,14 @@ exports.createSighting =  (req, res) => {
     const { missingPersonId, location, sightingDate, description, photoUrl } = req.body;
 
     // Check if missing person exists
-    const missingPerson =  MissingPerson.findById(missingPersonId);
-    if (!missingPerson) {
-      return res.status(404).json({ message: "Missing person not found" });
-    }
+    // const missingPerson =  MissingPerson.findById(missingPersonId);
+    // if (!missingPerson) {
+    //   return res.status(404).json({ message: "Missing person not found" });
+    // }
 
     const newSighting = new Sighting({
       missingPerson: missingPersonId,
-   //  reportedBy: req.user.id, // from auth middleware
+       reportedBy: req.user.id, // from auth middleware
       location,
       sightingDate,
       description,
