@@ -10,6 +10,7 @@ import ReportMissingPerson from "./pages/ReportMissingPerson";
 import ReportSighting from "./pages/ReportSighting";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
+import About from "./pages/about";
 //routes
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/report-sighting" element={<ReportSighting />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
+        <Route path="/about" element={<About />} />
       </Routes>
     </Router>
   );
