@@ -1,7 +1,7 @@
 const MissingPerson = require("../models/missingPerson.model");
 
 // Create missing person
-exports.createMissingPerson =  (req, res) => {
+exports.createMissingPerson = async (req, res) => {
   try {
     const {
       name,
@@ -14,7 +14,7 @@ exports.createMissingPerson =  (req, res) => {
     } = req.body;
 
     const newMissingPerson = new MissingPerson({
-      createdBy: req.user.id, // from auth middleware
+      createdBy: req.user.id,
       name,
       age,
       gender,
@@ -24,13 +24,23 @@ exports.createMissingPerson =  (req, res) => {
       photoUrl
     });
 
-     newMissingPerson.save();
-    res.status(201).json(newMissingPerson);
+    await newMissingPerson.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Missing person created successfully",
+      data: newMissingPerson
+    });
 
   } catch (error) {
-    res.status(500).json({ message: "Error creating missing person", error });
+    res.status(500).json({
+      success: false,
+      message: "Error creating missing person",
+      error: error.message
+    });
   }
 };
+
 
 
 

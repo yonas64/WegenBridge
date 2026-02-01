@@ -1,8 +1,9 @@
 const User = require('../models/users');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { generateToken } = require('../utils/generateToken');
 
-const JWT_SECRET = "jwt_secret_key";
+const JWT_SECRET = "process.env.JWT_SECRET";
 // Register new user
 exports.register = async (req, res) => {
   try {
@@ -29,7 +30,7 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).send('❌ Invalid email or password');
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '100h' });
+    const token = generateToken(user);
     res.status(200).json({ message: '✅ Login successful', token });
   } catch (err) {
     res.status(500).send('❌ Error logging in: ' + err.message);

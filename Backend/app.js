@@ -8,7 +8,8 @@ const sightingRoutes = require('./routes/sighting.routes');
 const swaggerUI = require('swagger-ui-express');
 const swaggerDocs = require('./swagger');
 const app = express();
-
+const cors = require("cors");
+require('dotenv').config();
 // Connect to MongoDB
  connectDB();
 
@@ -17,6 +18,11 @@ app.use(express.json());
 app.set('view engine', 'ejs');
 //swagger
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
+//frontend
+app.use(cors({
+  origin: "http://localhost:5173",
+  credentials: true
+}));
 // Routes
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);

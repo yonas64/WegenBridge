@@ -1,45 +1,88 @@
+import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import MissingPersonCard from "../components/MissingPersonCard";
 
+type MissingPerson = {
+  _id: string;
+  name: string;
+  age?: number;
+  gender?: string;
+  location?: string;
+  lastSeen?: string;
+  status?: "recent" | "critical" | "long-term";
+  image?: string;
+  relation?: string;
+};
+
 export default function MissingPersonsList() {
-  // Dummy data
-  const persons = [
-    { id: 1, name: "Jane Doe", age: 34, location: "Lagos", image: "" },
-    { id: 2, name: "John Smith", age: 28, location: "Abuja", image: "" },
-    { id: 3, name: "Mary Johnson", age: 19, location: "Kano", image: "" },
-    { id: 4, name: "Samuel Lee", age: 45, location: "Ibadan", image: "" },
-  ];
+  const [persons, setPersons] = useState<MissingPerson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchMissingPersons() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Get token from localStorage
+        const token = localStorage.getItem("token");
+        if (!token) throw new Error("You must be logged in to view this page");
+
+        const res = await fetch("http://localhost:3000/api/missing-persons", {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}` // <-- send JWT here
+          }
+        });
+
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.message || "Failed to fetch missing persons");
+        }
+
+        const data = await res.json();
+        setPersons(data); // assuming backend returns an array
+      } catch (err: any) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchMissingPersons();
+  }, []);
 
   return (
     <div>
       <Navbar />
       <div className="max-w-5xl mx-auto py-10 px-4">
         <h2 className="text-2xl font-bold mb-6">Missing Persons List</h2>
-        <div className="flex space-x-4 mb-6">
-          <input
-            type="text"
-            className="border rounded px-3 py-2 w-1/3"
-            placeholder="Search by name or location"
-          />
-          <select className="border rounded px-3 py-2">
-            <option>All Genders</option>
-            <option>Male</option>
-            <option>Female</option>
-            <option>Other</option>
-          </select>
-          <select className="border rounded px-3 py-2">
-            <option>All Ages</option>
-            <option>0-18</option>
-            <option>19-35</option>
-            <option>36-60</option>
-            <option>60+</option>
-          </select>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-          {persons.map((person) => (
-            <MissingPersonCard key={person.id} {...person} />
-          ))}
-        </div>
+
+        {loading && <p className="text-gray-500">Loading missing persons...</p>}
+        {error && <p className="text-red-500">{error}</p>}
+
+        {!loading && !error && persons.length === 0 && (
+          <p className="text-gray-500">No missing persons found.</p>
+        )}
+
+        {!loading && !error && persons.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {persons.map((person) => (
+              <MissingPersonCard
+                key={person._id}
+                id={person._id}
+                name={person.name}
+                age={person.age}
+                location={person.location}
+                lastSeen={person.lastSeen}
+                status={person.status}
+                image={person.image}
+                relation={person.relation || "Family Member"}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
