@@ -149,12 +149,12 @@ const auth = require("../middleware/auth");
  *                 $ref: '#/components/schemas/Sighting'
  */
 // Report a new sighting (must be logged in)
-router.post("/create",sightingController.createSighting);
+router.post("/create", auth,sightingController.createSighting);
 
 // Get all sightings for a missing person
-router.get("/:missingPersonId", sightingController.getSightingsByMissingPerson);
+router.get("/:missingPersonId", auth, sightingController.getSightingsByMissingPerson);
 
-router.get("/search", sightingController.getSightings);
+router.get("/search", auth, sightingController.getSightings);
 
 
 module.exports = router;

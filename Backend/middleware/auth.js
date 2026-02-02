@@ -1,39 +1,3 @@
-// const jwt = require("jsonwebtoken");
-
-// const JWT_SECRET = process.env.JWT_SECRET;
-
-// module.exports = function authMiddleware(req, res, next) {
-//   try {
-//     const authHeader = req.headers.authorization;
-
-//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//       return res.status(401).json({
-//         success: false,
-//         message: "No token provided",
-//       });
-//     }
-
-//     // Extract token from "Bearer <token>"
-//     const token = authHeader.split(" ")[1];
-
-//     // Verify token
-//     const decoded = jwt.verify(token, JWT_SECRET);
-
-//     // Attach decoded info to request
-//     req.user = decoded;
-
-//     next();
-//   } catch (error) {
-//     console.error("JWT Error:", error.message);
-//     return res.status(401).json({
-//       success: false,
-//       message: "Token is invalid or expired",
-//     });
-//   }
-// };
-
-
-
 const jwt = require("jsonwebtoken");
 const User = require("../models/users");
 //const logger = require("../utils/logger");

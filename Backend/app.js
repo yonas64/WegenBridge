@@ -9,6 +9,9 @@ const swaggerUI = require('swagger-ui-express');
 const swaggerDocs = require('./swagger');
 const app = express();
 const cors = require("cors");
+const cookieParser = require("cookie-parser");
+
+app.use(cookieParser());
 require('dotenv').config();
 // Connect to MongoDB
  connectDB();

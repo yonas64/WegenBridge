@@ -40,10 +40,12 @@ export default function Login() {
     }
   };
 
-  const handleChange = (e: any) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
+const handleChange = (e: any) => {
+  const { name, value, type, checked } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value,
   }));
 };
 

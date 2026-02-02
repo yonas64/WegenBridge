@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { generateToken } = require('../utils/generateToken');
 
-const JWT_SECRET = "process.env.JWT_SECRET";
+const JWT_SECRET = process.env.JWT_SECRET;
 // Register new user
 exports.register = async (req, res) => {
   try {
@@ -23,17 +23,57 @@ exports.register = async (req, res) => {
 // Login user
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, rememberMe } = req.body;
+
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).send('❌ Invalid email or password');
+    if (!user) {
+      return res.status(400).send('❌ Invalid email or password');
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).send('❌ Invalid email or password');
+    if (!isMatch) {
+      return res.status(400).send('❌ Invalid email or password');
+    }
 
-    const token = generateToken(user);
-    res.status(200).json({ message: '✅ Login successful', token });
+    const token = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: rememberMe ? "7d" : "1d" }
+    );
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,       // MUST be false on localhost
+      sameSite: "lax",
+      maxAge: rememberMe
+        ? 7 * 24 * 60 * 60 * 1000
+        : 24 * 60 * 60 * 1000,
+    });
+
+    res.status(200).json({ message: "✅ Login successful" });
   } catch (err) {
     res.status(500).send('❌ Error logging in: ' + err.message);
+  }
+};
+exports.logout = (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+  });
+  res.status(200).json({ message: "✅ Logout successful" });
+};
+
+// Get current logged-in user
+exports.getCurrentUser = async (req, res) => {
+  try {
+    // authMiddleware already sets req.user
+    const user = await User.findById(req.user._id).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.status(200).json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error: ' + err.message });
   }
 };
 
