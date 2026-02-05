@@ -5,7 +5,7 @@ const missingPersonSchema = new mongoose.Schema({
   
   name: { type: String, default: "Unknown" },
   age: Number,
-  gender: { type: String, enum: ["male", "female", "unknown"], default: "unknown" },
+  gender: { type: String, enum: ["Male", "Female", "unknown"], default: "unknown" },
 
   lastSeenLocation: String,
   lastSeenDate: Date,

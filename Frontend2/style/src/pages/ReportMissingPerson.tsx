@@ -61,11 +61,33 @@ export default function ReportMissingPerson() {
     setFormData(prev => ({ ...prev, [key]: value } as unknown as ReportForm));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: send formData to API
-    console.log("Submitting report", formData);
-  };
+ const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+  e.preventDefault();
+
+  const form = new FormData();
+
+  Object.entries(formData).forEach(([key, value]) => {
+    if (value !== null) {
+      form.append(key, value as any);
+    }
+  });
+
+  try {
+    const res = await fetch("http://localhost:3000/api/missing-persons", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+      body: form,
+    });
+
+    const data = await res.json();
+    console.log("Success:", data);
+  } catch (err) {
+    console.error("Submit failed", err);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -89,7 +111,7 @@ export default function ReportMissingPerson() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Personal Information Section */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -141,10 +163,10 @@ export default function ReportMissingPerson() {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     required
                   >
-                    <option value="">Select gender</option>
+                      <option value="">Select gender</option> 
                     <option value="male">Male</option>
                     <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    
                   </select>
                 </div>
 
@@ -325,7 +347,8 @@ export default function ReportMissingPerson() {
             <div className="pt-6 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => handleSubmit(e)}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Submit Report

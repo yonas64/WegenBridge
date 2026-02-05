@@ -10,8 +10,9 @@ exports.createMissingPerson = async (req, res) => {
       lastSeenLocation,
       lastSeenDate,
       description,
-      photoUrl
     } = req.body;
+
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
 
     const newMissingPerson = new MissingPerson({
       createdBy: req.user.id,

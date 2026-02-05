@@ -10,6 +10,8 @@ const swaggerDocs = require('./swagger');
 const app = express();
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const fs = require("fs");
+const path = require("path");
 
 app.use(cookieParser());
 require('dotenv').config();
@@ -19,6 +21,11 @@ require('dotenv').config();
 // Middleware
 app.use(express.json());
 app.set('view engine', 'ejs');
+const uploadsDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use("/uploads", express.static(uploadsDir));
 //swagger
 app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 //frontend

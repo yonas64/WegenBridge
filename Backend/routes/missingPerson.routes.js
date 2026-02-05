@@ -1,6 +1,3 @@
-const router = require("express").Router();
-const missingController = require("../controller/missingPerson.controller");
-const auth = require("../middleware/auth"); // protect routes
 
 /**
  * @swagger
@@ -204,8 +201,13 @@ const auth = require("../middleware/auth"); // protect routes
  *       "401":
  *         description: Unauthorized
  */
+const router = require("express").Router();
+const missingController = require("../controller/missingPerson.controller");
+const auth = require("../middleware/auth"); 
+const upload = require("../middleware/upload");
+
 // Create
-router.post("/", auth, missingController.createMissingPerson);
+router.post("/", auth, upload.single("photo"), missingController.createMissingPerson);
 
 // Get all
 router.get("/", auth, missingController.getAllMissingPersons);

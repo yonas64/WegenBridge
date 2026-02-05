@@ -136,6 +136,6 @@ router.post('/register', authController.register);
 router.post('/login', authController.login);
 router.get('/profile', authController.protect, authController.getProfile);
 router.get('/me',auth , authController.getCurrentUser);
-router.post('/logout', authController.logout);
+router.post('/logout', auth, authController.logout);
 
 module.exports = router;
