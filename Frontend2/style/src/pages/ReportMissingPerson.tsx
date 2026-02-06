@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   User, 
   Calendar, 
@@ -45,6 +45,8 @@ export default function ReportMissingPerson() {
     relationship: "",
     photo: null,
   });
+  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -61,11 +63,39 @@ export default function ReportMissingPerson() {
     setFormData(prev => ({ ...prev, [key]: value } as unknown as ReportForm));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // TODO: send formData to API
-    console.log("Submitting report", formData);
-  };
+ const handleSubmit = async (e: React.FormEvent | React.MouseEvent) => {
+  e.preventDefault();
+
+  const form = new FormData();
+
+  Object.entries(formData).forEach(([key, value]) => {
+    if (value !== null) {
+      form.append(key, value as any);
+    }
+  });
+
+  try {
+    const res = await fetch("http://localhost:3000/api/missing-persons", {
+      method: "POST",
+      credentials: "include",
+      body: form,
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error("Submit failed:", res.status, data);
+      return;
+    }
+
+    console.log("Success:", data);
+    setSuccessMessage("Report submitted successfully. Redirecting...");
+    setTimeout(() => navigate("/missing-persons"), 1200);
+  } catch (err) {
+    console.error("Submit failed", err);
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
@@ -89,7 +119,12 @@ export default function ReportMissingPerson() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          {successMessage && (
+            <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              {successMessage}
+            </div>
+          )}
+          <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Personal Information Section */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -141,10 +176,11 @@ export default function ReportMissingPerson() {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                     required
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                      <option value="">Select gender</option> 
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="unknown">Unknown</option>
+                    
                   </select>
                 </div>
 
@@ -321,33 +357,16 @@ export default function ReportMissingPerson() {
               </div>
             </div>
 
-            {/* Form Actions */}
             <div className="pt-6 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={(e) => handleSubmit(e)}
                   className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
                 >
                   Submit Report
                 </button>
-                <Link
-                  to="/"
-                  className="flex-1 text-center border border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </Link>
-              </div>
-            </div>
-
-            {/* Privacy Notice */}
-            <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-              <div className="flex items-start">
-                <Shield className="h-5 w-5 text-green-600 mr-3 mt-0.5" />
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Your information is secure and confidential. By submitting this report, you agree to our privacy policy.
-                  </p>
-                </div>
+             
               </div>
             </div>
           </form>

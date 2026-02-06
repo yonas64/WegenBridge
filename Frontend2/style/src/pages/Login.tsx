@@ -1,38 +1,54 @@
 import Navbar from "../components/Navbar";
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { 
-  Lock, 
-  Mail, 
-  Eye, 
-  EyeOff, 
-  UserPlus, 
-  Shield,
-  Heart,
-  AlertCircle
-} from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { FormEvent } from "react";
+import { Heart, Shield, AlertCircle, Lock, Mail, Eye, EyeOff, UserPlus } from "lucide-react";
 
 export default function Login() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-    rememberMe: false
+    rememberMe: false,
   });
 
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Login attempt:", formData);
-    // Add your login logic here
+
+    try {
+      await axios.post(
+        "http://localhost:3000/api/auth/login",
+        {
+          email: formData.email,
+          password: formData.password,
+          rememberMe: formData.rememberMe, // 👈 pass to backend
+        },
+        {
+          withCredentials: true, // ⭐ VERY IMPORTANT
+        }
+      );
+
+  
+      navigate("/");
+
+    } catch (error) {
+      console.error("Login failed", error);
+      alert("Invalid email or password");
+    }
   };
 
-  const handleChange = (e: { target: { name: any; value: any; type: any; checked: any; }; }) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
+const handleChange = (e: any) => {
+  const { name, value, type, checked } = e.target;
+
+  setFormData((prev) => ({
+    ...prev,
+    [name]: type === "checkbox" ? checked : value,
+  }));
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">

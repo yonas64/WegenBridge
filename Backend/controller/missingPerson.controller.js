@@ -1,7 +1,7 @@
 const MissingPerson = require("../models/missingPerson.model");
 
 // Create missing person
-exports.createMissingPerson =  (req, res) => {
+exports.createMissingPerson = async (req, res) => {
   try {
     const {
       name,
@@ -10,11 +10,12 @@ exports.createMissingPerson =  (req, res) => {
       lastSeenLocation,
       lastSeenDate,
       description,
-      photoUrl
     } = req.body;
 
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+
     const newMissingPerson = new MissingPerson({
-      createdBy: req.user.id, // from auth middleware
+      createdBy: req.user.id,
       name,
       age,
       gender,
@@ -24,13 +25,23 @@ exports.createMissingPerson =  (req, res) => {
       photoUrl
     });
 
-     newMissingPerson.save();
-    res.status(201).json(newMissingPerson);
+    await newMissingPerson.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Missing person created successfully",
+      data: newMissingPerson
+    });
 
   } catch (error) {
-    res.status(500).json({ message: "Error creating missing person", error });
+    res.status(500).json({
+      success: false,
+      message: "Error creating missing person",
+      error: error.message
+    });
   }
 };
+
 
 
 
@@ -38,7 +49,20 @@ exports.createMissingPerson =  (req, res) => {
 // Get all missing persons + Search functionality
 exports.getAllMissingPersons = async (req, res) => {
   try {
-    const { name, gender, location, status, fromDate, toDate, q } = req.query;
+    const {
+      name,
+      gender,
+      location,
+      status,
+      fromDate,
+      toDate,
+      q,
+      ageMin,
+      ageMax,
+      page = 1,
+      limit = 50,
+      sort = "createdAt:desc",
+    } = req.query;
 
     let filter = {};
 
@@ -55,6 +79,13 @@ exports.getAllMissingPersons = async (req, res) => {
       if (toDate) filter.lastSeenDate.$lte = new Date(toDate);
     }
 
+    // Age range filter
+    if (ageMin || ageMax) {
+      filter.age = {};
+      if (ageMin) filter.age.$gte = Number(ageMin);
+      if (ageMax) filter.age.$lte = Number(ageMax);
+    }
+
     // General keyword search (search in multiple fields)
     if (q) {
       filter.$or = [
@@ -64,7 +95,17 @@ exports.getAllMissingPersons = async (req, res) => {
       ];
     }
 
-    const missingPersons = await MissingPerson.find(filter).sort({ createdAt: -1 });
+    const [sortField, sortDir] = String(sort).split(":");
+    const sortOrder = sortDir === "asc" ? 1 : -1;
+
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const missingPersons = await MissingPerson.find(filter)
+      .sort({ [sortField || "createdAt"]: sortOrder })
+      .skip(skip)
+      .limit(limitNum);
 
     res.json(missingPersons);
 

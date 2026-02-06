@@ -1,6 +1,3 @@
-const router = require("express").Router();
-const missingController = require("../controller/missingPerson.controller");
-const auth = require("../middleware/auth"); // protect routes
 
 /**
  * @swagger
@@ -204,19 +201,24 @@ const auth = require("../middleware/auth"); // protect routes
  *       "401":
  *         description: Unauthorized
  */
+const router = require("express").Router();
+const missingController = require("../controller/missingPerson.controller");
+const auth = require("../middleware/auth"); 
+const upload = require("../middleware/upload");
+
 // Create
-router.post("/", missingController.createMissingPerson);
+router.post("/", auth, upload.single("photo"), missingController.createMissingPerson);
 
 // Get all
-router.get("/", missingController.getAllMissingPersons);
+router.get("/", auth, missingController.getAllMissingPersons);
 
 // Get one
-router.get("/:id", missingController.getMissingPersonById);
+router.get("/:id", auth, missingController.getMissingPersonById);
 
 // Update status (missing/found)
-router.patch("/:id/status", missingController.updateStatus);
+router.patch("/:id/status", auth, missingController.updateStatus);
 
 // Delete (optional)
-router.delete("/:id", missingController.deleteMissingPerson);
+router.delete("/:id", auth,missingController.deleteMissingPerson);
 
 module.exports = router;

@@ -8,7 +8,8 @@ const sightingSchema = new mongoose.Schema({
   sightingDate: Date,
 
   description: String,
-  photoUrl: String
+  photoUrl: String,
+  phoneNumber: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("Sighting", sightingSchema);
