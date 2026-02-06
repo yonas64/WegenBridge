@@ -9,22 +9,49 @@ import axios from "axios";
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // ✅ Check login status via backend cookie
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await axios.get("http://localhost:3000/api/auth/me", {
+        const res = await axios.get("http://localhost:3000/api/auth/me", {
           withCredentials: true, // sends cookie automatically
         });
         setIsLoggedIn(true);
+        setUserRole(res.data?.role || null);
       } catch {
         setIsLoggedIn(false);
+        setUserRole(null);
       }
     };
 
     checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (!isLoggedIn) {
+      setUnreadCount(0);
+      return;
+    }
+
+    const fetchNotifications = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/api/notifications", {
+          withCredentials: true,
+        });
+        const unread = Array.isArray(res.data)
+          ? res.data.filter((n: { read?: boolean }) => !n.read).length
+          : 0;
+        setUnreadCount(unread);
+      } catch {
+        setUnreadCount(0);
+      }
+    };
+
+    fetchNotifications();
+  }, [isLoggedIn]);
 
   const handleLogout = async () => {
     try {
@@ -40,7 +67,9 @@ export default function Navbar() {
 
   const navLinks = [
     { to: "/", label: "Home", icon: <Home className="h-4 w-4" /> },
-    { to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> },
+    ...(userRole === "admin"
+      ? [{ to: "/dashboard", label: "Dashboard", icon: <LayoutDashboard className="h-4 w-4" /> }]
+      : []),
     { to: "/missing-persons", label: "Missing Persons", icon: <Users className="h-4 w-4" /> },
     { to: "/report-missing-person", label: "Report", icon: <AlertCircle className="h-4 w-4" /> },
     { to: "/about", label: "About", icon: <Shield className="h-4 w-4" /> },
@@ -90,6 +119,20 @@ export default function Navbar() {
 
           {/* Right Side - Auth Buttons */}
           <div className="flex items-center space-x-3">
+            {isLoggedIn && (
+              <Link
+                to="/notifications"
+                className="relative hidden md:inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5 text-gray-700" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
             <div className="hidden md:flex items-center space-x-2">
               {isLoggedIn ? (
                 <button

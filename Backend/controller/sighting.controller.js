@@ -1,16 +1,59 @@
+const https = require("https");
+const querystring = require("querystring");
 const Sighting = require("../models/sighting.model");
 const MissingPerson = require("../models/missingPerson.model");
+const Notification = require("../models/notification.model");
+
+const sendSms = async ({ to, body }) => {
+  const accountSid = process.env.TWILIO_ACCOUNT_SID;
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const from = process.env.TWILIO_FROM;
+
+  if (!accountSid || !authToken || !from || !to || !body) {
+    return false;
+  }
+
+  const postData = querystring.stringify({
+    To: to,
+    From: from,
+    Body: body,
+  });
+
+  const options = {
+    hostname: "api.twilio.com",
+    path: `/2010-04-01/Accounts/${accountSid}/Messages.json`,
+    method: "POST",
+    auth: `${accountSid}:${authToken}`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "Content-Length": Buffer.byteLength(postData),
+    },
+  };
+
+  return new Promise((resolve, reject) => {
+    const req = https.request(options, (res) => {
+      res.on("data", () => {});
+      res.on("end", () => {
+        resolve(res.statusCode >= 200 && res.statusCode < 300);
+      });
+    });
+
+    req.on("error", reject);
+    req.write(postData);
+    req.end();
+  });
+};
 
 // Report a sighting
-exports.createSighting =  (req, res) => {
+exports.createSighting = async (req, res) => {
   try {
-    const { missingPersonId, location, sightingDate, description, photoUrl } = req.body;
+    const { missingPersonId, location, sightingDate, description, photoUrl, phoneNumber } = req.body;
 
     // Check if missing person exists
-    // const missingPerson =  MissingPerson.findById(missingPersonId);
-    // if (!missingPerson) {
-    //   return res.status(404).json({ message: "Missing person not found" });
-    // }
+    const missingPerson = await MissingPerson.findById(missingPersonId);
+    if (!missingPerson) {
+      return res.status(404).json({ message: "Missing person not found" });
+    }
 
     const newSighting = new Sighting({
       missingPerson: missingPersonId,
@@ -18,10 +61,35 @@ exports.createSighting =  (req, res) => {
       location,
       sightingDate,
       description,
-      photoUrl
+      photoUrl,
+      phoneNumber
     });
 
-     newSighting.save();
+    await newSighting.save();
+
+    const message = `New sighting reported for ${missingPerson.name}. Location: ${location}. ` +
+      (description ? `Details: ${description}. ` : "") +
+      (phoneNumber ? `Reporter phone: ${phoneNumber}` : "");
+
+    await Notification.create({
+      recipientUser: missingPerson.createdBy,
+      recipientPhone: missingPerson.contactPhone,
+      recipientEmail: missingPerson.contactEmail,
+      title: "New Sighting Reported",
+      message,
+      type: "sighting",
+      relatedMissingPerson: missingPerson._id,
+      relatedSighting: newSighting._id,
+    });
+
+    if (missingPerson.contactPhone) {
+      try {
+        await sendSms({ to: missingPerson.contactPhone, body: message });
+      } catch (err) {
+        // Avoid failing the request if SMS fails
+        console.error("SMS send failed", err);
+      }
+    }
     res.status(201).json(newSighting);
 
   } catch (error) {

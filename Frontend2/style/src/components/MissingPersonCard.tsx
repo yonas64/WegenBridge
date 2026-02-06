@@ -9,7 +9,7 @@ type MissingPersonCardProps = {
   image?: string;
   lastSeen?: string;
   relation?: string;
-  status?: "recent" | "critical" | "long-term";
+  status?: "missing" | "found";
 };
 
 export default function MissingPersonCard(props: MissingPersonCardProps) {
@@ -21,20 +21,18 @@ export default function MissingPersonCard(props: MissingPersonCardProps) {
     image,
     lastSeen = "Unknown",
     relation = "Family Member",
-    status = "recent"
+    status = "missing"
   } = props;
   // Status colors
   const statusColors = {
-    recent: "bg-blue-100 text-blue-800 border-blue-200",
-    critical: "bg-red-100 text-red-800 border-red-200",
-    "long-term": "bg-amber-100 text-amber-800 border-amber-200"
+    missing: "bg-blue-100 text-blue-800 border-blue-200",
+    found: "bg-green-100 text-green-800 border-green-200"
   };
 
   // Status labels
   const statusLabels = {
-    recent: "Recently Missing",
-    critical: "Urgent Case",
-    "long-term": "Long-term Search"
+    missing: "Missing",
+    found: "Found"
   };
 
   return (

@@ -1,70 +1,78 @@
 import Navbar from "../components/Navbar";
 import MissingPersonCard from "../components/MissingPersonCard";
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { Search, Heart, AlertCircle, Users, Shield } from "lucide-react";
 
 export default function Home() {
-  const samplePersons = [
-    { 
-      id: 1, 
-      name: "Jane Doe", 
-      age: 34, 
-      location: "Lagos", 
-      image: "",
-      lastSeen: "2 weeks ago",
-      relation: "Sister"
-    },
-    { 
-      id: 2, 
-      name: "John Smith", 
-      age: 28, 
-      location: "Abuja", 
-      image: "",
-      lastSeen: "3 days ago",
-      relation: "Brother"
-    },
-    { 
-      id: 3, 
-      name: "Mary Johnson", 
-      age: 19, 
-      location: "Kano", 
-      image: "",
-      lastSeen: "1 month ago",
-      relation: "Daughter"
-    },
-    { 
-      id: 4, 
-      name: "David Brown", 
-      age: 42, 
-      location: "Port Harcourt", 
-      image: "",
-      lastSeen: "2 months ago",
-      relation: "Father"
-    },
-    { 
-      id: 5, 
-      name: "Sarah Williams", 
-      age: 25, 
-      location: "Ibadan", 
-      image: "",
-      lastSeen: "1 week ago",
-      relation: "Cousin"
-    },
-    { 
-      id: 6, 
-      name: "Michael Adekunle", 
-      age: 65, 
-      location: "Benin City", 
-      image: "",
-      lastSeen: "4 months ago",
-      relation: "Grandfather"
-    },
-  ];
+  type MissingPerson = {
+    _id: string;
+    name: string;
+    age?: number;
+    lastSeenLocation?: string;
+    lastSeenDate?: string;
+    photoUrl?: string;
+    relationship?: string;
+    status?: "missing" | "found";
+    createdBy?: string;
+  };
+
+  const [persons, setPersons] = useState<MissingPerson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const apiBaseUrl =  "http://localhost:3000";
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchMissingPersons() {
+      try {
+        setLoading(true);
+        setError(null);
+        const res = await fetch("http://localhost:3000/api/missing-persons", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          throw new Error(data.message || "Failed to fetch missing persons");
+        }
+
+        const data = await res.json();
+        if (isMounted) setPersons(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        if (isMounted) setError(err.message || "Something went wrong");
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    }
+
+    fetchMissingPersons();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const formatDate = (value?: string) => {
+    if (!value) return "Unknown";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
+  };
+
+  const totalCases = persons.length;
+  const reunitedFamilies = persons.filter((p) => p.status === "found").length;
+  const activeCases = persons.filter((p) => p.status !== "found").length;
+  const volunteerCount = new Set(
+    persons.map((p) => p.createdBy).filter(Boolean)
+  ).size;
+  const successRate =
+    totalCases === 0 ? "0%" : `${Math.round((reunitedFamilies / totalCases) * 100)}%`;
 
   const stats = [
-    { label: "Reunited Families", value: "1,234+", icon: <Heart className="h-6 w-6" /> },
-    { label: "Active Cases", value: "567", icon: <AlertCircle className="h-6 w-6" /> },
-    { label: "Volunteers", value: "89", icon: <Users className="h-6 w-6" /> },
-    { label: "Success Rate", value: "78%", icon: <Shield className="h-6 w-6" /> },
+    { label: "Reunited Families", value: `${reunitedFamilies}`, icon: <Heart className="h-6 w-6" /> },
+    { label: "Active Cases", value: `${activeCases}`, icon: <AlertCircle className="h-6 w-6" /> },
+    { label: "Volunteers", value: `${volunteerCount}`, icon: <Users className="h-6 w-6" /> },
+    { label: "Success Rate", value: successRate, icon: <Shield className="h-6 w-6" /> },
   ];
 
   return (
@@ -84,19 +92,7 @@ export default function Home() {
               Reuniting missing loved ones with their families through community support and technology
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-2xl mx-auto">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  type="text"
-                  placeholder="Search for a missing person..."
-                  className="w-full pl-12 pr-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-              <button className="bg-yellow-400 text-blue-900 px-8 py-3 rounded-lg font-semibold hover:bg-yellow-300 transition-colors duration-200 shadow-lg">
-                Search Now
-              </button>
-            </div>
+           
           </div>
         </main>
       </section>
@@ -130,7 +126,10 @@ export default function Home() {
         {/* Quick Actions */}
         <section className="mb-12">
           <div className="grid md:grid-cols-3 gap-6 mb-8">
-            <button className="bg-white p-6 rounded-xl border border-blue-200 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md group">
+            <Link
+              to="/report-missing-person"
+              className="bg-white p-6 rounded-xl border border-blue-200 hover:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md group"
+            >
               <div className="flex items-center">
                 <div className="bg-blue-100 p-3 rounded-lg mr-4 group-hover:bg-blue-200 transition-colors">
                   <AlertCircle className="h-6 w-6 text-blue-600" />
@@ -140,7 +139,7 @@ export default function Home() {
                   <p className="text-sm text-gray-600 mt-1">Submit a new case</p>
                 </div>
               </div>
-            </button>
+            </Link>
             
             <button className="bg-white p-6 rounded-xl border border-purple-200 hover:border-purple-400 transition-all duration-200 shadow-sm hover:shadow-md group">
               <div className="flex items-center">
@@ -154,7 +153,10 @@ export default function Home() {
               </div>
             </button>
             
-            <button className="bg-white p-6 rounded-xl border border-green-200 hover:border-green-400 transition-all duration-200 shadow-sm hover:shadow-md group">
+            <Link
+              to="/register"
+              className="bg-white p-6 rounded-xl border border-green-200 hover:border-green-400 transition-all duration-200 shadow-sm hover:shadow-md group"
+            >
               <div className="flex items-center">
                 <div className="bg-green-100 p-3 rounded-lg mr-4 group-hover:bg-green-200 transition-colors">
                   <Users className="h-6 w-6 text-green-600" />
@@ -164,7 +166,7 @@ export default function Home() {
                   <p className="text-sm text-gray-600 mt-1">Join our community</p>
                 </div>
               </div>
-            </button>
+            </Link>
           </div>
         </section>
 
@@ -187,16 +189,37 @@ export default function Home() {
             </select>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {samplePersons.map((person) => (
-              <MissingPersonCard key={person.id} {...person} />
-            ))}
-          </div>
+          {loading && (
+            <p className="text-gray-500">Loading missing persons...</p>
+          )}
+          {error && <p className="text-red-500">{error}</p>}
+          {!loading && !error && persons.length === 0 && (
+            <p className="text-gray-500">No missing persons found.</p>
+          )}
+          {!loading && !error && persons.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {persons.slice(0, 6).map((person) => (
+                <MissingPersonCard
+                  key={person._id}
+                  id={person._id}
+                  name={person.name}
+                  age={person.age}
+                  location={person.lastSeenLocation}
+                  lastSeen={formatDate(person.lastSeenDate)}
+                  image={person.photoUrl ? `${apiBaseUrl}${person.photoUrl}` : undefined}
+                  relation={person.relationship || "Family Member"}
+                />
+              ))}
+            </div>
+          )}
 
           <div className="text-center mt-10">
-            <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+            <Link
+              to="/missing-persons"
+              className="inline-block bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+            >
               View All Missing Persons
-            </button>
+            </Link>
           </div>
         </section>
 

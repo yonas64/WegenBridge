@@ -1,6 +1,6 @@
 import Navbar from "../components/Navbar";
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   User, 
   Calendar, 
@@ -45,6 +45,8 @@ export default function ReportMissingPerson() {
     relationship: "",
     photo: null,
   });
+  const [successMessage, setSuccessMessage] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const target = e.target as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement;
@@ -75,14 +77,20 @@ export default function ReportMissingPerson() {
   try {
     const res = await fetch("http://localhost:3000/api/missing-persons", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("token")}`,
-      },
+      credentials: "include",
       body: form,
     });
 
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      console.error("Submit failed:", res.status, data);
+      return;
+    }
+
     console.log("Success:", data);
+    setSuccessMessage("Report submitted successfully. Redirecting...");
+    setTimeout(() => navigate("/missing-persons"), 1200);
   } catch (err) {
     console.error("Submit failed", err);
   }
@@ -111,6 +119,11 @@ export default function ReportMissingPerson() {
             </div>
           </div>
 
+          {successMessage && (
+            <div className="mb-4 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-800">
+              {successMessage}
+            </div>
+          )}
           <form onSubmit={handleSubmit} noValidate className="space-y-6">
             {/* Personal Information Section */}
             <div>
@@ -164,8 +177,9 @@ export default function ReportMissingPerson() {
                     required
                   >
                       <option value="">Select gender</option> 
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="unknown">Unknown</option>
                     
                   </select>
                 </div>
@@ -343,7 +357,6 @@ export default function ReportMissingPerson() {
               </div>
             </div>
 
-            {/* Form Actions */}
             <div className="pt-6 border-t border-gray-200">
               <div className="flex flex-col sm:flex-row gap-4">
                 <button
@@ -353,24 +366,7 @@ export default function ReportMissingPerson() {
                 >
                   Submit Report
                 </button>
-                <Link
-                  to="/"
-                  className="flex-1 text-center border border-gray-300 text-gray-700 py-3 px-6 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </Link>
-              </div>
-            </div>
-
-            {/* Privacy Notice */}
-            <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-              <div className="flex items-start">
-                <Shield className="h-5 w-5 text-green-600 mr-3 mt-0.5" />
-                <div>
-                  <p className="text-sm text-gray-700">
-                    Your information is secure and confidential. By submitting this report, you agree to our privacy policy.
-                  </p>
-                </div>
+             
               </div>
             </div>
           </form>
