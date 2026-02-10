@@ -1,6 +1,8 @@
 import Navbar from "../components/Navbar";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
+import { logError, logEvent } from "../utils/siemLogger";
 import { 
   User, 
   Mail, 
@@ -17,8 +19,11 @@ import {
 } from "lucide-react";
 
 export default function Register() {
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -30,14 +35,39 @@ export default function Register() {
     subscribeNewsletter: true
   });
 
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
       alert("Passwords don't match!");
       return;
     }
-    console.log("Registration attempt:", formData);
-    // Add your registration logic here
+    try {
+      setSubmitting(true);
+      setError(null);
+      await axios.post(
+        "http://localhost:3000/api/auth/register",
+        {
+          name: formData.fullName,
+          email: formData.email,
+          password: formData.password,
+        },
+        {
+          withCredentials: true,
+        }
+      );
+      logEvent("auth_register_success", undefined, { email: formData.email, role: "user" });
+      navigate("/login");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data ||
+        err?.message ||
+        "Registration failed";
+      logError("auth_register_failed", message, { email: formData.email, role: "user" });
+      setError(message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleChange = (e: { target: { name: any; value: any; type: any; checked: any; }; }) => {
@@ -73,6 +103,11 @@ export default function Register() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {error && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {error}
+                  </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -288,9 +323,9 @@ export default function Register() {
                 <button
                   type="submit"
                   className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={!formData.agreeToTerms}
+                  disabled={!formData.agreeToTerms || submitting}
                 >
-                  Create Account
+                  {submitting ? "Creating Account..." : "Create Account"}
                 </button>
 
                 <div className="relative my-6">
@@ -324,6 +359,15 @@ export default function Register() {
                     className="text-blue-600 hover:text-blue-700 font-semibold"
                   >
                     Sign in here
+                  </Link>
+                </p>
+                <p className="mt-2 text-gray-600">
+                  Need admin access?{" "}
+                  <Link
+                    to="/register-admin"
+                    className="text-blue-600 hover:text-blue-700 font-semibold"
+                  >
+                    Register as admin
                   </Link>
                 </p>
               </div>

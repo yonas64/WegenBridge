@@ -134,6 +134,9 @@ const auth = require('../middleware/auth');
 
 router.post('/register', authController.register);
 router.post('/login', authController.login);
+router.post('/google', authController.googleLogin);
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
 router.get('/profile', authController.protect, authController.getProfile);
 router.get('/me',auth , authController.getCurrentUser);
 router.post('/logout', auth, authController.logout);

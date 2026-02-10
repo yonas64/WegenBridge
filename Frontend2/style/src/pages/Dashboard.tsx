@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { getLocalLogs } from "../utils/siemLogger";
 import {
   Search,
   Bell,
@@ -50,6 +51,15 @@ export default function Dashboard() {
   });
   const [recentActivities, setRecentActivities] = useState<Activity[]>([]);
   const [recentCases, setRecentCases] = useState<RecentCase[]>([]);
+  const [localLogs, setLocalLogs] = useState<
+    {
+      level: "info" | "warn" | "error";
+      event: string;
+      message?: string;
+      ts: string;
+      context: Record<string, unknown>;
+    }[]
+  >([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -95,6 +105,21 @@ export default function Dashboard() {
       isMounted = false;
     };
   }, [navigate]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const refreshLogs = () => {
+      if (!isMounted) return;
+      setLocalLogs(getLocalLogs());
+    };
+
+    refreshLogs();
+    const id = window.setInterval(refreshLogs, 3000);
+    return () => {
+      isMounted = false;
+      window.clearInterval(id);
+    };
+  }, []);
 
   const statsCards = useMemo(
     () => [
@@ -293,6 +318,57 @@ export default function Dashboard() {
                   <button className="w-full mt-6 text-center text-blue-600 hover:text-blue-700 font-medium py-3 border border-blue-200 rounded-lg hover:bg-blue-50 transition-colors">
                     View All Activity
                   </button>
+                </div>
+
+                <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-bold text-gray-900">Frontend Logs</h3>
+                    <span className="text-xs text-gray-500">
+                      {localLogs.length} captured
+                    </span>
+                  </div>
+
+                  {localLogs.length === 0 ? (
+                    <p className="text-sm text-gray-600">No logs captured yet.</p>
+                  ) : (
+                    <div className="space-y-3 max-h-80 overflow-auto pr-2">
+                      {localLogs
+                        .slice()
+                        .reverse()
+                        .slice(0, 30)
+                        .map((log, idx) => (
+                          <div
+                            key={`${log.ts}-${idx}`}
+                            className="rounded-lg border border-gray-100 bg-gray-50 px-3 py-2"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-xs font-semibold uppercase ${
+                                  log.level === "error"
+                                    ? "text-red-600"
+                                    : log.level === "warn"
+                                    ? "text-amber-600"
+                                    : "text-blue-600"
+                                }`}
+                              >
+                                {log.level}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {new Date(log.ts).toLocaleTimeString()}
+                              </span>
+                            </div>
+                            <div className="text-sm font-medium text-gray-900">
+                              {log.event}
+                            </div>
+                            {log.message && (
+                              <div className="text-xs text-gray-600">
+                                {log.message}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </div>
 
                 <div className="rounded-2xl bg-gradient-to-br from-green-50 to-emerald-100 p-6 border border-green-200">
