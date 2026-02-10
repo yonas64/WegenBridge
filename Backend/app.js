@@ -7,6 +7,7 @@ const missingPersonRoutes = require('./routes/missingPerson.routes');
 const sightingRoutes = require('./routes/sighting.routes');
 const notificationRoutes = require('./routes/notification.routes');
 const adminRoutes = require('./routes/admin.routes');
+const telemetryRoutes = require('./routes/telemetry.routes');
 const swaggerUI = require('swagger-ui-express');
 const swaggerDocs = require('./swagger');
 const app = express();
@@ -22,6 +23,7 @@ require('dotenv').config();
 
 // Middleware
 app.use(express.json());
+app.set('trust proxy', true);
 app.set('view engine', 'ejs');
 const uploadsDir = path.join(__dirname, "uploads");
 if (!fs.existsSync(uploadsDir)) {
@@ -42,6 +44,7 @@ app.use('/api/missing-persons', missingPersonRoutes);
 app.use('/api/sightings', sightingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/telemetry', telemetryRoutes);
 
 //404 handler
 app.use((req, res) => {
