@@ -28,8 +28,26 @@ let flushTimer: number | undefined;
 const FLUSH_INTERVAL_MS = 5000;
 const MAX_BATCH = 10;
 const localBuffer: LocalLogRecord[] = [];
+const REDACTED = "[REDACTED]";
+const SENSITIVE_KEY_PATTERN =
+  /password|pass|token|secret|authorization|cookie|session|jwt|apikey|api_key/i;
 let cachedClientIp: string | null | undefined;
 let clientIpPromise: Promise<string | null> | null = null;
+
+function sanitizeContext(value: unknown): unknown {
+  if (value === null || value === undefined) return value;
+  if (Array.isArray(value)) {
+    return value.map((item) => sanitizeContext(item));
+  }
+  if (typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      out[key] = SENSITIVE_KEY_PATTERN.test(key) ? REDACTED : sanitizeContext(child);
+    }
+    return out;
+  }
+  return value;
+}
 
 async function fetchClientIp() {
   if (cachedClientIp !== undefined) return cachedClientIp;
@@ -89,6 +107,10 @@ async function flush() {
       context: {
         ...buildBaseContext(),
         ...(e.context || {}),
+        clientIp:
+          (e.context?.clientIp as string | null | undefined) === undefined
+            ? cachedClientIp
+            : (e.context?.clientIp as string | null | undefined),
       },
     })),
   };
@@ -118,6 +140,7 @@ function scheduleFlush() {
 }
 
 export function logEvent(event: string, message?: string, context?: Record<string, unknown>) {
+  const safeContext = (sanitizeContext(context || {}) || {}) as Record<string, unknown>;
   const log = {
     level: "info" as SiemLogLevel,
     event,
@@ -125,16 +148,17 @@ export function logEvent(event: string, message?: string, context?: Record<strin
     ts: new Date().toISOString(),
     context: {
       ...buildBaseContext(),
-      ...(context || {}),
+      ...safeContext,
     },
   };
   recordLocal(log);
   if (!canSend()) return;
-  queue.push({ event, message, context, level: "info" });
+  queue.push({ event, message, context: safeContext, level: "info" });
   scheduleFlush();
 }
 
 export function logWarn(event: string, message?: string, context?: Record<string, unknown>) {
+  const safeContext = (sanitizeContext(context || {}) || {}) as Record<string, unknown>;
   const log = {
     level: "warn" as SiemLogLevel,
     event,
@@ -142,16 +166,17 @@ export function logWarn(event: string, message?: string, context?: Record<string
     ts: new Date().toISOString(),
     context: {
       ...buildBaseContext(),
-      ...(context || {}),
+      ...safeContext,
     },
   };
   recordLocal(log);
   if (!canSend()) return;
-  queue.push({ event, message, context, level: "warn" });
+  queue.push({ event, message, context: safeContext, level: "warn" });
   scheduleFlush();
 }
 
 export function logError(event: string, message?: string, context?: Record<string, unknown>) {
+  const safeContext = (sanitizeContext(context || {}) || {}) as Record<string, unknown>;
   const log = {
     level: "error" as SiemLogLevel,
     event,
@@ -159,12 +184,12 @@ export function logError(event: string, message?: string, context?: Record<strin
     ts: new Date().toISOString(),
     context: {
       ...buildBaseContext(),
-      ...(context || {}),
+      ...safeContext,
     },
   };
   recordLocal(log);
   if (!canSend()) return;
-  queue.push({ event, message, context, level: "error" });
+  queue.push({ event, message, context: safeContext, level: "error" });
   scheduleFlush();
 }
 
