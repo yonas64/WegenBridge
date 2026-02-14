@@ -217,6 +217,7 @@ router.get("/:id", auth, missingController.getMissingPersonById);
 
 // Update status (missing/found)
 router.patch("/:id/status", auth, missingController.updateStatus);
+router.patch("/:id", auth, upload.single("photo"), missingController.updateMissingPerson);
 
 // Delete (optional)
 router.delete("/:id", auth,missingController.deleteMissingPerson);

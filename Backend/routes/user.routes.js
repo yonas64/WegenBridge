@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controller/usercontroller');
 const auth = require('../middleware/auth'); 
+const upload = require('../middleware/upload');
 /**
  * @swagger
  * tags:
@@ -116,6 +117,8 @@ const auth = require('../middleware/auth');
  */
 router.post('/', auth, userController.createUser);
 router.get('/', auth,userController.getUsers);
+router.get('/me/profile', auth, userController.getMyProfile);
+router.patch('/me', auth, upload.single('profileImage'), userController.updateMyProfile);
 router.get('/:id', auth, userController.getUserById);
 router.put('/:id', auth, userController.updateUser);
 router.delete('/:id', auth, userController.deleteUser);

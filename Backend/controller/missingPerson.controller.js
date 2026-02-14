@@ -9,7 +9,12 @@ exports.createMissingPerson = async (req, res) => {
       gender,
       lastSeenLocation,
       lastSeenDate,
+      lastSeenTime,
       description,
+      contactName,
+      contactPhone,
+      contactEmail,
+      relationship,
     } = req.body;
 
     const photoUrl = req.file ? `/uploads/${req.file.filename}` : null;
@@ -21,8 +26,13 @@ exports.createMissingPerson = async (req, res) => {
       gender,
       lastSeenLocation,
       lastSeenDate,
+      lastSeenTime,
       description,
-      photoUrl
+      photoUrl,
+      contactName,
+      contactPhone,
+      contactEmail,
+      relationship,
     });
 
     await newMissingPerson.save();
@@ -123,11 +133,17 @@ exports.updateStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const updatedPerson = await MissingPerson.findByIdAndUpdate(
-      req.params.id,
-      { status },
-      { new: true }
-    );
+    const existing = await MissingPerson.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "Missing person not found" });
+    }
+
+    if (String(existing.createdBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden: You can only update your own reports" });
+    }
+
+    existing.status = status;
+    const updatedPerson = await existing.save();
 
     if (!updatedPerson) {
       return res.status(404).json({ message: "Missing person not found" });
@@ -137,6 +153,50 @@ exports.updateStatus = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Error updating status", error });
+  }
+};
+
+// Update a missing person report (owner only)
+exports.updateMissingPerson = async (req, res) => {
+  try {
+    const allowedFields = [
+      "name",
+      "age",
+      "gender",
+      "lastSeenLocation",
+      "lastSeenDate",
+      "lastSeenTime",
+      "description",
+      "contactName",
+      "contactPhone",
+      "contactEmail",
+      "relationship",
+      "status",
+    ];
+
+    const existing = await MissingPerson.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "Missing person not found" });
+    }
+
+    if (String(existing.createdBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden: You can only update your own reports" });
+    }
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        existing[field] = req.body[field];
+      }
+    }
+
+    if (req.file) {
+      existing.photoUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const updated = await existing.save();
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating missing person", error });
   }
 };
 

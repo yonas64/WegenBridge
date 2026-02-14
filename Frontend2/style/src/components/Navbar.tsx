@@ -135,13 +135,22 @@ export default function Navbar() {
             )}
             <div className="hidden md:flex items-center space-x-2">
               {isLoggedIn ? (
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center text-sm font-medium text-gray-700 hover:text-red-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
-                >
-                  <LogOut className="h-4 w-4 mr-1.5" />
-                  Logout
-                </button>
+                <>
+                  <Link
+                    to="/profile"
+                    className="flex items-center text-sm font-medium text-gray-700 hover:text-blue-700 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                  >
+                    <User className="h-4 w-4 mr-1.5" />
+                    Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center text-sm font-medium text-gray-700 hover:text-red-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-gray-50"
+                  >
+                    <LogOut className="h-4 w-4 mr-1.5" />
+                    Logout
+                  </button>
+                </>
               ) : (
                 <>
                   <Link
@@ -173,6 +182,51 @@ export default function Navbar() {
           </div>
         </div>
       </div>
+
+      {isMenuOpen && (
+        <div className="md:hidden border-t border-gray-100 bg-white">
+          <div className="px-4 py-3 space-y-2">
+            {isLoggedIn ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  to="/login"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Join
+                </Link>
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }
