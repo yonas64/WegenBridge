@@ -1,5 +1,5 @@
 const express = require("express");
-const detector = require("../services/impossibleTravelDetector");
+//const detector = require("../services/impossibleTravelDetector");
 
 const router = express.Router();
 

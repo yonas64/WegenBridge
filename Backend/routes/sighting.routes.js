@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const sightingController = require("../controller/sighting.controller");
 const auth = require("../middleware/auth");
+const upload = require("../middleware/upload");
 /**
  * @openapi
  * tags:
@@ -149,12 +150,13 @@ const auth = require("../middleware/auth");
  *                 $ref: '#/components/schemas/Sighting'
  */
 // Report a new sighting (must be logged in)
-router.post("/create", auth,sightingController.createSighting);
+router.post("/create", auth, upload.single("photo"), sightingController.createSighting);
+
+router.get("/search", auth, sightingController.getSightings);
+router.patch("/:id", auth, upload.single("photo"), sightingController.updateSighting);
 
 // Get all sightings for a missing person
 router.get("/:missingPersonId", auth, sightingController.getSightingsByMissingPerson);
-
-router.get("/search", auth, sightingController.getSightings);
 
 
 module.exports = router;

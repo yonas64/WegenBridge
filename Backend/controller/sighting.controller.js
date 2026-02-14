@@ -47,7 +47,8 @@ const sendSms = async ({ to, body }) => {
 // Report a sighting
 exports.createSighting = async (req, res) => {
   try {
-    const { missingPersonId, location, sightingDate, description, photoUrl, phoneNumber } = req.body;
+    const { missingPersonId, location, sightingDate, description, phoneNumber } = req.body;
+    const photoUrl = req.file ? `/uploads/${req.file.filename}` : req.body.photoUrl;
 
     // Check if missing person exists
     const missingPerson = await MissingPerson.findById(missingPersonId);
@@ -172,5 +173,36 @@ exports.getSightings = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Error fetching sightings", error });
+  }
+};
+
+// Update a sighting report (owner only)
+exports.updateSighting = async (req, res) => {
+  try {
+    const allowedFields = ["location", "sightingDate", "description", "photoUrl", "phoneNumber"];
+
+    const sighting = await Sighting.findById(req.params.id);
+    if (!sighting) {
+      return res.status(404).json({ message: "Sighting not found" });
+    }
+
+    if (String(sighting.reportedBy) !== String(req.user._id)) {
+      return res.status(403).json({ message: "Forbidden: You can only update your own sightings" });
+    }
+
+    for (const field of allowedFields) {
+      if (req.body[field] !== undefined) {
+        sighting[field] = req.body[field];
+      }
+    }
+
+    if (req.file) {
+      sighting.photoUrl = `/uploads/${req.file.filename}`;
+    }
+
+    const updatedSighting = await sighting.save();
+    res.json(updatedSighting);
+  } catch (error) {
+    res.status(500).json({ message: "Error updating sighting", error });
   }
 };

@@ -31,6 +31,7 @@ export default function Register() {
     role: "volunteer",
     password: "",
     confirmPassword: "",
+    profileImage: null as File | null,
     agreeToTerms: false,
     subscribeNewsletter: true
   });
@@ -44,17 +45,18 @@ export default function Register() {
     try {
       setSubmitting(true);
       setError(null);
-      await axios.post(
-        "http://localhost:3000/api/auth/register",
-        {
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-        },
-        {
-          withCredentials: true,
-        }
-      );
+
+      const payload = new FormData();
+      payload.append("name", formData.fullName);
+      payload.append("email", formData.email);
+      payload.append("password", formData.password);
+      if (formData.profileImage) {
+        payload.append("profileImage", formData.profileImage);
+      }
+
+      await axios.post("http://localhost:3000/api/auth/register", payload, {
+        withCredentials: true,
+      });
       logEvent("auth_register_success", undefined, { email: formData.email, role: "user" });
       navigate("/login");
     } catch (err: any) {
@@ -70,11 +72,11 @@ export default function Register() {
     }
   };
 
-  const handleChange = (e: { target: { name: any; value: any; type: any; checked: any; }; }) => {
-    const { name, value, type, checked } = e.target;
+  const handleChange = (e: any) => {
+    const { name, value, type, checked, files } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : type === "file" ? (files?.[0] || null) : value
     }));
   };
 
@@ -170,6 +172,22 @@ export default function Register() {
                     />
                     <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                   </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Profile Image
+                  </label>
+                  <input
+                    type="file"
+                    name="profileImage"
+                    onChange={handleChange}
+                    accept="image/*"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  />
+                  {formData.profileImage && (
+                    <p className="text-xs text-gray-500 mt-2">Selected: {formData.profileImage.name}</p>
+                  )}
                 </div>
 
                 <div>
