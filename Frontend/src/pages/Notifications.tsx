@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import NotificationCard from "../components/NotificationCard";
 import { useEffect, useState } from "react";
+import { apiUrl } from "../utils/api";
 
 type NotificationItem = {
   _id: string;
@@ -22,7 +23,7 @@ export default function Notifications() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch("http://localhost:3000/api/notifications", {
+        const res = await fetch(apiUrl("/api/notifications"), {
           method: "GET",
           credentials: "include",
         });

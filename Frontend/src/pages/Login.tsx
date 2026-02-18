@@ -5,6 +5,7 @@ import axios from "axios";
 import { FormEvent } from "react";
 import { Heart, Shield, AlertCircle, Lock, Mail, Eye, EyeOff, UserPlus } from "lucide-react";
 import { logError, logEvent } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -23,7 +24,7 @@ export default function Login() {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/auth/login",
+        apiUrl("/api/auth/login"),
         {
           email: formData.email,
           password: formData.password,
@@ -64,7 +65,7 @@ export default function Login() {
         callback: async (response: any) => {
           try {
             await axios.post(
-              "http://localhost:3000/api/auth/google",
+              apiUrl("/api/auth/google"),
               {
                 idToken: response.credential,
                 rememberMe: formData.rememberMe,

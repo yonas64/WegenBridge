@@ -4,6 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { Shield, Mail, Lock, Eye, EyeOff, User } from "lucide-react";
 import { logError, logEvent } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 
 export default function AdminRegister() {
   const navigate = useNavigate();
@@ -34,7 +35,7 @@ export default function AdminRegister() {
       setSubmitting(true);
       setError(null);
       await axios.post(
-        "http://localhost:3000/api/auth/register",
+        apiUrl("/api/auth/register"),
         {
           name: formData.fullName,
           email: formData.email,
@@ -46,7 +47,7 @@ export default function AdminRegister() {
       logEvent("auth_register_success", undefined, { email: formData.email, role: "admin" });
 
       await axios.post(
-        "http://localhost:3000/api/auth/login",
+        apiUrl("/api/auth/login"),
         {
           email: formData.email,
           password: formData.password,

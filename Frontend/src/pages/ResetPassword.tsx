@@ -4,6 +4,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import { Lock, ArrowLeft, CheckCircle, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { logError, logEvent } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
@@ -23,7 +24,7 @@ export default function ResetPassword() {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/auth/reset-password",
+        apiUrl("/api/auth/reset-password"),
         { email, token, newPassword },
         { withCredentials: true }
       );

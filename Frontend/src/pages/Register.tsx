@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { logError, logEvent } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 import { 
   User, 
   Mail, 
@@ -54,7 +55,7 @@ export default function Register() {
         payload.append("profileImage", formData.profileImage);
       }
 
-      await axios.post("http://localhost:3000/api/auth/register", payload, {
+      await axios.post(apiUrl("/api/auth/register"), payload, {
         withCredentials: true,
       });
       logEvent("auth_register_success", undefined, { email: formData.email, role: "user" });

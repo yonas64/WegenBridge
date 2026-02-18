@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Camera, Edit3, Mail, Shield, UserCircle2 } from "lucide-react";
+import { apiBaseUrl, apiUrl } from "../utils/api";
 
 type ProfileUser = {
   _id: string;
@@ -39,8 +40,6 @@ type SightingReport = {
   };
 };
 
-const API_BASE_URL = "http://localhost:3000";
-
 const toDateInput = (value?: string) => {
   if (!value) return "";
   const d = new Date(value);
@@ -58,7 +57,7 @@ const formatDate = (value?: string) => {
 const imageUrl = (path?: string) => {
   if (!path) return "";
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
-  return `${API_BASE_URL}${path}`;
+  return `${apiBaseUrl}${path}`;
 };
 
 const statusBadge = (status: "missing" | "found") =>
@@ -110,7 +109,7 @@ export default function Profile() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`${API_BASE_URL}/api/users/me/profile`, {
+      const res = await fetch(apiUrl("/api/users/me/profile"), {
         credentials: "include",
       });
 
@@ -169,7 +168,7 @@ export default function Profile() {
       if (profileForm.age) form.append("age", profileForm.age);
       if (profileForm.profileImage) form.append("profileImage", profileForm.profileImage);
 
-      const res = await fetch(`${API_BASE_URL}/api/users/me`, {
+      const res = await fetch(apiUrl("/api/users/me"), {
         method: "PATCH",
         credentials: "include",
         body: form,
@@ -215,7 +214,7 @@ export default function Profile() {
       form.append("status", missingDraft.status);
       if (missingDraft.photo) form.append("photo", missingDraft.photo);
 
-      const res = await fetch(`${API_BASE_URL}/api/missing-persons/${id}`, {
+      const res = await fetch(apiUrl(`/api/missing-persons/${id}`), {
         method: "PATCH",
         credentials: "include",
         body: form,
@@ -234,7 +233,7 @@ export default function Profile() {
   const toggleMissingStatus = async (person: MissingPersonReport) => {
     const nextStatus = person.status === "found" ? "missing" : "found";
     try {
-      const res = await fetch(`${API_BASE_URL}/api/missing-persons/${person._id}/status`, {
+      const res = await fetch(apiUrl(`/api/missing-persons/${person._id}/status`), {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -270,7 +269,7 @@ export default function Profile() {
       form.append("phoneNumber", sightingDraft.phoneNumber);
       if (sightingDraft.photo) form.append("photo", sightingDraft.photo);
 
-      const res = await fetch(`${API_BASE_URL}/api/sightings/${id}`, {
+      const res = await fetch(apiUrl(`/api/sightings/${id}`), {
         method: "PATCH",
         credentials: "include",
         body: form,

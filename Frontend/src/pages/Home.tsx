@@ -3,6 +3,7 @@ import MissingPersonCard from "../components/MissingPersonCard";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Search, Heart, AlertCircle, Users, Shield } from "lucide-react";
+import { apiBaseUrl, apiUrl } from "../utils/api";
 
 export default function Home() {
   type MissingPerson = {
@@ -20,15 +21,13 @@ export default function Home() {
   const [persons, setPersons] = useState<MissingPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const apiBaseUrl =  "http://localhost:3000";
-
   useEffect(() => {
     let isMounted = true;
     async function fetchMissingPersons() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("http://localhost:3000/api/missing-persons", {
+        const res = await fetch(apiUrl("/api/missing-persons"), {
           method: "GET",
           credentials: "include",
         });

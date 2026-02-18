@@ -15,6 +15,7 @@ import {
   Clock,
   Users,
 } from "lucide-react";
+import { apiBaseUrl, apiUrl } from "../utils/api";
 
 type MissingPerson = {
   _id: string;
@@ -39,8 +40,6 @@ export default function MissingPersonDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const apiBaseUrl =  "http://localhost:3000";
-
   useEffect(() => {
     if (!id) return;
     let isMounted = true;
@@ -50,7 +49,7 @@ export default function MissingPersonDetail() {
         setLoading(true);
         setError(null);
 
-        const res = await fetch(`${apiBaseUrl}/api/missing-persons/${id}`, {
+        const res = await fetch(apiUrl(`/api/missing-persons/${id}`), {
           method: "GET",
           credentials: "include",
         });
@@ -78,7 +77,7 @@ export default function MissingPersonDetail() {
     return () => {
       isMounted = false;
     };
-  }, [apiBaseUrl, id, navigate]);
+  }, [id, navigate]);
 
   const caseStatus = {
     missing: {

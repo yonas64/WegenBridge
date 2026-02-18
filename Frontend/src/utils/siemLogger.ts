@@ -1,3 +1,5 @@
+import { apiUrl } from "./api";
+
 export type SiemLogLevel = "info" | "warn" | "error";
 
 type SiemLogEvent = {
@@ -13,7 +15,7 @@ const SIEM_TOKEN = (import.meta as any).env?.VITE_SIEM_TOKEN as string | undefin
 const SIEM_DEBUG = (import.meta as any).env?.VITE_SIEM_DEBUG === "true";
 const IP_LOOKUP_URL =
   ((import.meta as any).env?.VITE_IP_LOOKUP_URL as string | undefined) ||
-  "http://localhost:3000/api/telemetry/ip";
+  apiUrl("/api/telemetry/ip");
 
 type LocalLogRecord = {
   level: SiemLogLevel;
