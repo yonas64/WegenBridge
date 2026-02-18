@@ -4,6 +4,7 @@ import axios from "axios";
 import Navbar from "../components/Navbar";
 import { Mail, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
 import { logError, logEvent } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -17,7 +18,7 @@ export default function ForgotPassword() {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/auth/forgot-password",
+        apiUrl("/api/auth/forgot-password"),
         { email },
         { withCredentials: true }
       );

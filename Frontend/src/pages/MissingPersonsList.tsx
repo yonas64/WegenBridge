@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Navbar from "../components/Navbar";
 import MissingPersonCard from "../components/MissingPersonCard";
+import { apiBaseUrl, apiUrl } from "../utils/api";
 
 type MissingPerson = {
   _id: string;
@@ -20,7 +21,6 @@ export default function MissingPersonsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
-  const apiBaseUrl = "http://localhost:3000";
   const [filters, setFilters] = useState({
     q: "",
     gender: "",
@@ -54,7 +54,7 @@ export default function MissingPersonsList() {
         setError(null);
 
         const res = await fetch(
-          `http://localhost:3000/api/missing-persons?${queryString}`,
+          apiUrl(`/api/missing-persons?${queryString}`),
           {
             method: "GET",
             credentials: "include", // 🍪 SEND COOKIE

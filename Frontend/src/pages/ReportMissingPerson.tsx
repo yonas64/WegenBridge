@@ -14,6 +14,7 @@ import {
   Phone,
   Mail
 } from "lucide-react";
+import { apiUrl } from "../utils/api";
 
 export default function ReportMissingPerson() {
   type ReportForm = {
@@ -75,7 +76,7 @@ export default function ReportMissingPerson() {
   });
 
   try {
-    const res = await fetch("http://localhost:3000/api/missing-persons", {
+    const res = await fetch(apiUrl("/api/missing-persons"), {
       method: "POST",
       credentials: "include",
       body: form,

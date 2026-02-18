@@ -2,6 +2,7 @@ import Navbar from "../components/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { getLocalLogs } from "../utils/siemLogger";
+import { apiUrl } from "../utils/api";
 import {
   Search,
   Bell,
@@ -68,7 +69,7 @@ export default function Dashboard() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch("http://localhost:3000/api/admin/dashboard", {
+        const res = await fetch(apiUrl("/api/admin/dashboard"), {
           method: "GET",
           credentials: "include",
         });

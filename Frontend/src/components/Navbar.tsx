@@ -5,6 +5,7 @@ import {
   Users, AlertCircle, LogIn, UserPlus, Shield, LogOut
 } from "lucide-react";
 import axios from "axios";
+import { apiUrl } from "../utils/api";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -16,7 +17,7 @@ export default function Navbar() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/auth/me", {
+        const res = await axios.get(apiUrl("/api/auth/me"), {
           withCredentials: true, // sends cookie automatically
         });
         setIsLoggedIn(true);
@@ -38,7 +39,7 @@ export default function Navbar() {
 
     const fetchNotifications = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/api/notifications", {
+        const res = await axios.get(apiUrl("/api/notifications"), {
           withCredentials: true,
         });
         const unread = Array.isArray(res.data)
@@ -55,7 +56,7 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     try {
-      await axios.post("http://localhost:3000/api/auth/logout", {}, {
+      await axios.post(apiUrl("/api/auth/logout"), {}, {
         withCredentials: true,
       });
       setIsLoggedIn(false);

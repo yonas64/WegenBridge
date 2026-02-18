@@ -9,6 +9,14 @@ const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+const isProduction = process.env.NODE_ENV === "production";
+
+const buildCookieOptions = (rememberMe) => ({
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
+  maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
+});
 
 // Register new user
 exports.register = async (req, res) => {
@@ -42,8 +50,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password, rememberMe } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).send('Invalid email or password');
     }
@@ -62,14 +71,7 @@ exports.login = async (req, res) => {
       { expiresIn: rememberMe ? '7d' : '1d' }
     );
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: rememberMe
-        ? 7 * 24 * 60 * 60 * 1000
-        : 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, buildCookieOptions(rememberMe));
 
     res.status(200).json({ message: 'Login successful' });
   } catch (err) {
@@ -120,14 +122,7 @@ exports.googleLogin = async (req, res) => {
       { expiresIn: rememberMe ? '7d' : '1d' }
     );
 
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-      maxAge: rememberMe
-        ? 7 * 24 * 60 * 60 * 1000
-        : 24 * 60 * 60 * 1000,
-    });
+    res.cookie("token", token, buildCookieOptions(rememberMe));
 
     res.status(200).json({ message: 'Google login successful' });
   } catch (err) {
@@ -136,10 +131,10 @@ exports.googleLogin = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie('token', {
+  res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
   });
   res.status(200).json({ message: 'Logout successful' });
 };
@@ -149,8 +144,9 @@ exports.forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: 'Email is required' });
+    const normalizedEmail = String(email).trim().toLowerCase();
 
-    const user = await User.findOne({ email: email.toLowerCase() });
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(200).json({ message: 'If that email exists, a reset link has been sent.' });
     }
@@ -165,7 +161,7 @@ exports.forgotPassword = async (req, res) => {
     user.resetPasswordExpires = Date.now() + 60 * 60 * 1000;
     await user.save();
 
-    const resetUrl = `${FRONTEND_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
+    const resetUrl = `${FRONTEND_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(normalizedEmail)}`;
 
     const nodemailer = require('nodemailer');
     const transporter = nodemailer.createTransport({
@@ -180,7 +176,7 @@ exports.forgotPassword = async (req, res) => {
 
     await transporter.sendMail({
       from: process.env.SMTP_FROM || process.env.SMTP_USER,
-      to: email,
+      to: normalizedEmail,
       subject: 'Password reset request',
       text: `You requested a password reset. Click the link to reset your password: ${resetUrl}`,
     });
@@ -198,10 +194,11 @@ exports.resetPassword = async (req, res) => {
     if (!email || !token || !newPassword) {
       return res.status(400).json({ message: 'Email, token, and new password are required' });
     }
+    const normalizedEmail = String(email).trim().toLowerCase();
 
     const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       resetPasswordToken: tokenHash,
       resetPasswordExpires: { $gt: Date.now() },
     });

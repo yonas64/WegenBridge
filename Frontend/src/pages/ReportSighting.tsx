@@ -1,6 +1,7 @@
 import Navbar from "../components/Navbar";
 import React, { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { apiUrl } from "../utils/api";
 
 type SightingForm = {
   missingPersonId: string;
@@ -56,7 +57,7 @@ export default function ReportSighting() {
     };
 
     try {
-      const res = await fetch("http://localhost:3000/api/sightings/create", {
+      const res = await fetch(apiUrl("/api/sightings/create"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
