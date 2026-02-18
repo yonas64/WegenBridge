@@ -39,10 +39,10 @@ app.use("/uploads", express.static(uploadsDir));
    CORS CONFIG (FIXED)
 ========================= */
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://wegen-bridge-djg8.vercel.app",
-];
+const allowedOrigins = (process.env.CORS_ORIGIN || process.env.FRONTEND_URL || "http://localhost:5173")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
@@ -56,6 +56,8 @@ app.use(
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    optionsSuccessStatus: 200,
   })
 );
 
@@ -88,6 +90,7 @@ app.use((req, res) => {
   res.status(404).json({
     error: "Route not found",
   });
+
 });
 
 /* =========================

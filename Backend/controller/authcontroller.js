@@ -10,12 +10,25 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 const isProduction = process.env.NODE_ENV === "production";
+const cookieDomain = process.env.COOKIE_DOMAIN;
+const useCrossSiteCookies = process.env.COOKIE_CROSS_SITE === "true" || isProduction;
+const secureCookies = process.env.COOKIE_SECURE === "true" || useCrossSiteCookies;
 
 const buildCookieOptions = (rememberMe) => ({
   httpOnly: true,
-  secure: isProduction,
-  sameSite: isProduction ? "none" : "lax",
+  secure: secureCookies,
+  sameSite: useCrossSiteCookies ? "none" : "lax",
+  path: "/",
+  ...(cookieDomain ? { domain: cookieDomain } : {}),
   maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
+});
+
+const buildClearCookieOptions = () => ({
+  httpOnly: true,
+  secure: secureCookies,
+  sameSite: useCrossSiteCookies ? "none" : "lax",
+  path: "/",
+  ...(cookieDomain ? { domain: cookieDomain } : {}),
 });
 
 // Register new user
@@ -131,11 +144,7 @@ exports.googleLogin = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie("token", {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-  });
+  res.clearCookie("token", buildClearCookieOptions());
   res.status(200).json({ message: 'Logout successful' });
 };
 
