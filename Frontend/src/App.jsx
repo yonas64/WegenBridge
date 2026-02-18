@@ -14,7 +14,7 @@ import ReportMissingPerson from "./pages/ReportMissingPerson";
 import ReportSighting from "./pages/ReportSighting";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
-import About from "./pages/about";
+import About from "./pages/About";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { logError, logPageView } from "./utils/siemLogger";
