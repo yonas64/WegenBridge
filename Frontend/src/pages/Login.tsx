@@ -23,26 +23,35 @@ export default function Login() {
     e.preventDefault();
 
     try {
+      const email = formData.email.trim().toLowerCase();
       await axios.post(
         apiUrl("/api/auth/login"),
         {
-          email: formData.email,
+          email,
           password: formData.password,
-          rememberMe: formData.rememberMe, // 👈 pass to backend
+          rememberMe: formData.rememberMe,
         },
         {
-          withCredentials: true, // ⭐ VERY IMPORTANT
+          withCredentials: true,
         }
       );
 
-  
-      logEvent("auth_login_success", undefined, { email: formData.email });
-      navigate("/");
+      const meRes = await axios.get(apiUrl("/api/auth/me"), {
+        withCredentials: true,
+      });
+      const role = meRes?.data?.role;
 
-    } catch (error) {
-      logError("auth_login_failed", "Invalid email or password", { email: formData.email });
+      logEvent("auth_login_success", undefined, { email, role });
+      navigate(role === "admin" ? "/dashboard" : "/");
+    } catch (error: any) {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data ||
+        error?.message ||
+        "Login failed";
+      logError("auth_login_failed", message, { email: formData.email });
       console.error("Login failed", error);
-      alert("Invalid email or password");
+      alert(message);
     }
   };
 
