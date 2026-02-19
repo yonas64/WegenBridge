@@ -153,6 +153,7 @@ const upload = require("../middleware/upload");
 router.post("/create", auth, upload.single("photo"), sightingController.createSighting);
 
 router.get("/search", auth, sightingController.getSightings);
+router.get("/detail/:id", auth, sightingController.getSightingById);
 router.patch("/:id", auth, upload.single("photo"), sightingController.updateSighting);
 
 // Get all sightings for a missing person

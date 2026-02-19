@@ -9,6 +9,8 @@ type NotificationItem = {
   message: string;
   createdAt?: string;
   read?: boolean;
+  relatedMissingPerson?: string;
+  relatedSighting?: string;
 };
 
 export default function Notifications() {
@@ -34,7 +36,28 @@ export default function Notifications() {
         }
 
         const data = await res.json();
-        if (isMounted) setNotifications(Array.isArray(data) ? data : []);
+        const list: NotificationItem[] = Array.isArray(data) ? data : [];
+        if (!isMounted) return;
+
+        setNotifications(list);
+
+        const unread = list.filter((n) => !n.read);
+        if (unread.length > 0) {
+          await Promise.all(
+            unread.map((n) =>
+              fetch(apiUrl(`/api/notifications/${n._id}/read`), {
+                method: "PATCH",
+                credentials: "include",
+              }).catch(() => null)
+            )
+          );
+
+          if (!isMounted) return;
+          setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+          window.dispatchEvent(
+            new CustomEvent("notifications:unreadCount", { detail: { count: 0 } })
+          );
+        }
       } catch (err: any) {
         if (isMounted) setError(err.message || "Something went wrong");
       } finally {
@@ -52,6 +75,12 @@ export default function Notifications() {
     if (!value) return "Unknown";
     const date = new Date(value);
     return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
+  };
+
+  const detailsLink = (n: NotificationItem) => {
+    if (n.relatedSighting) return `/sightings/${n.relatedSighting}`;
+    if (n.relatedMissingPerson) return `/missing-persons/${n.relatedMissingPerson}`;
+    return "/notifications";
   };
 
   return (
@@ -72,6 +101,8 @@ export default function Notifications() {
                 title={n.title || "Notification"}
                 message={n.message}
                 date={formatDate(n.createdAt)}
+                read={Boolean(n.read)}
+                detailsLink={detailsLink(n)}
               />
             ))}
           </div>

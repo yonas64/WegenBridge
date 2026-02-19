@@ -12,6 +12,7 @@ import MissingPersonsList from "./pages/MissingPersonsList";
 import MissingPersonDetail from "./pages/MissingPersonDetail";
 import ReportMissingPerson from "./pages/ReportMissingPerson";
 import ReportSighting from "./pages/ReportSighting";
+import SightingDetail from "./pages/SightingDetail";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import About from "./pages/About";
@@ -67,6 +68,7 @@ function App() {
         <Route path="/missing-persons/:id" element={<MissingPersonDetail />} />
         <Route path="/report-missing-person" element={<ReportMissingPerson />} />
         <Route path="/report-sighting" element={<ReportSighting />} />
+        <Route path="/sightings/:id" element={<SightingDetail />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/notifications" element={<Notifications />} />
         <Route path="/about" element={<About />} />

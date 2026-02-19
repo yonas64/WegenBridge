@@ -1,4 +1,7 @@
 const MissingPerson = require("../models/missingPerson.model");
+const Sighting = require("../models/sighting.model");
+const Notification = require("../models/notification.model");
+const { compareLocalPhotos, isFaceMatch } = require("../utils/faceMatcher");
 
 // Create missing person
 exports.createMissingPerson = async (req, res) => {
@@ -36,6 +39,41 @@ exports.createMissingPerson = async (req, res) => {
     });
 
     await newMissingPerson.save();
+
+    // Automatic photo matching against existing sightings.
+    // If similarity passes threshold, notify the new report owner.
+    if (photoUrl) {
+      const sightingsWithPhotos = await Sighting.find({
+        photoUrl: { $exists: true, $ne: null },
+      }).select("_id location sightingDate photoUrl");
+
+      for (const sighting of sightingsWithPhotos) {
+        const similarity = await compareLocalPhotos(photoUrl, sighting.photoUrl);
+        if (!isFaceMatch(similarity)) continue;
+
+        const alreadyNotified = await Notification.findOne({
+          type: "face_match",
+          relatedMissingPerson: newMissingPerson._id,
+          relatedSighting: sighting._id,
+        }).select("_id");
+
+        if (alreadyNotified) continue;
+
+        const matchPercent = Math.round(similarity * 100);
+        await Notification.create({
+          recipientUser: newMissingPerson.createdBy,
+          recipientPhone: newMissingPerson.contactPhone,
+          recipientEmail: newMissingPerson.contactEmail,
+          title: "Possible Face Match Found",
+          message:
+            `Your new report for ${newMissingPerson.name} may match an existing sighting ` +
+            `(${matchPercent}% similarity). Location: ${sighting.location || "Unknown"}.`,
+          type: "face_match",
+          relatedMissingPerson: newMissingPerson._id,
+          relatedSighting: sighting._id,
+        });
+      }
+    }
 
     res.status(201).json({
       success: true,

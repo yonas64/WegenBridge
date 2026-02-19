@@ -3,6 +3,7 @@ const querystring = require("querystring");
 const Sighting = require("../models/sighting.model");
 const MissingPerson = require("../models/missingPerson.model");
 const Notification = require("../models/notification.model");
+const { compareLocalPhotos, isFaceMatch } = require("../utils/faceMatcher");
 
 const sendSms = async ({ to, body }) => {
   const accountSid = process.env.TWILIO_ACCOUNT_SID;
@@ -91,6 +92,42 @@ exports.createSighting = async (req, res) => {
         console.error("SMS send failed", err);
       }
     }
+
+    // Automatic photo matching across other active missing-person reports.
+    // If similarity passes threshold, notify the original reporter.
+    if (photoUrl) {
+      const candidates = await MissingPerson.find({
+        _id: { $ne: missingPerson._id },
+        status: "missing",
+        photoUrl: { $exists: true, $ne: null },
+      }).select("_id name createdBy contactPhone contactEmail photoUrl");
+
+      for (const candidate of candidates) {
+        const similarity = await compareLocalPhotos(photoUrl, candidate.photoUrl);
+        if (!isFaceMatch(similarity)) continue;
+
+        const alreadyNotified = await Notification.findOne({
+          type: "face_match",
+          relatedMissingPerson: candidate._id,
+          relatedSighting: newSighting._id,
+        }).select("_id");
+
+        if (alreadyNotified) continue;
+
+        const matchPercent = Math.round(similarity * 100);
+        await Notification.create({
+          recipientUser: candidate.createdBy,
+          recipientPhone: candidate.contactPhone,
+          recipientEmail: candidate.contactEmail,
+          title: "Possible Face Match Found",
+          message: `A new sighting photo may match ${candidate.name} (${matchPercent}% similarity). Please review this report.`,
+          type: "face_match",
+          relatedMissingPerson: candidate._id,
+          relatedSighting: newSighting._id,
+        });
+      }
+    }
+
     res.status(201).json(newSighting);
 
   } catch (error) {
@@ -115,6 +152,23 @@ exports.getSightingsByMissingPerson = async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ message: "Error fetching sightings", error });
+  }
+};
+
+// Get one sighting by ID
+exports.getSightingById = async (req, res) => {
+  try {
+    const sighting = await Sighting.findById(req.params.id)
+      .populate("missingPerson", "name photoUrl")
+      .populate("reportedBy", "name email");
+
+    if (!sighting) {
+      return res.status(404).json({ message: "Sighting not found" });
+    }
+
+    res.json(sighting);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching sighting", error });
   }
 };
 

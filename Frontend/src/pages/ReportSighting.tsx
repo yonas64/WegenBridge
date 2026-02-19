@@ -9,6 +9,7 @@ type SightingForm = {
   sightingDate: string;
   description: string;
   phoneNumber: string;
+  photo: File | null;
 };
 
 export default function ReportSighting() {
@@ -22,6 +23,7 @@ export default function ReportSighting() {
     sightingDate: "",
     description: "",
     phoneNumber: "",
+    photo: null,
   });
 
   const handleChange = (
@@ -29,6 +31,11 @@ export default function ReportSighting() {
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    setFormData((prev) => ({ ...prev, photo: file }));
   };
 
   const buildSightingDate = () => {
@@ -48,20 +55,21 @@ export default function ReportSighting() {
       return;
     }
 
-    const payload = {
-      missingPersonId: formData.missingPersonId,
-      location: formData.location,
-      sightingDate: buildSightingDate(),
-      description: formData.description,
-      phoneNumber: formData.phoneNumber,
-    };
+    const payload = new FormData();
+    payload.append("missingPersonId", formData.missingPersonId);
+    payload.append("location", formData.location);
+    payload.append("sightingDate", buildSightingDate());
+    payload.append("description", formData.description);
+    payload.append("phoneNumber", formData.phoneNumber);
+    if (formData.photo) {
+      payload.append("photo", formData.photo);
+    }
 
     try {
       const res = await fetch(apiUrl("/api/sightings/create"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
       const data = await res.json().catch(() => ({}));
@@ -176,6 +184,24 @@ export default function ReportSighting() {
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
                 placeholder="+1 555 123 4567"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Photo (Optional)
+              </label>
+              <input
+                type="file"
+                name="photo"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              />
+              {formData.photo && (
+                <p className="mt-2 text-xs text-gray-500">
+                  Selected: {formData.photo.name}
+                </p>
+              )}
             </div>
 
             <div className="pt-6 border-t border-gray-200">

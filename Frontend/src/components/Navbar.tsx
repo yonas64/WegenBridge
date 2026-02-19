@@ -52,6 +52,22 @@ export default function Navbar() {
     };
 
     fetchNotifications();
+
+    const onUnreadCountEvent = (event: Event) => {
+      const customEvent = event as CustomEvent<{ count?: number }>;
+      const count = customEvent.detail?.count;
+      if (typeof count === "number") {
+        setUnreadCount(Math.max(0, count));
+      }
+    };
+
+    window.addEventListener("notifications:unreadCount", onUnreadCountEvent as EventListener);
+    return () => {
+      window.removeEventListener(
+        "notifications:unreadCount",
+        onUnreadCountEvent as EventListener
+      );
+    };
   }, [isLoggedIn]);
 
   const handleLogout = async () => {
