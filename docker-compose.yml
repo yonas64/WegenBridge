@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./Backend
+    container_name: family_backend
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./Backend/.env
+    restart: unless-stopped
+
+  frontend:
+    build: ./Frontend2
+    container_name: family_frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

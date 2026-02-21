@@ -144,7 +144,22 @@ exports.googleLogin = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  res.clearCookie("token", buildClearCookieOptions());
+  const baseOptions = {
+    httpOnly: true,
+    secure: secureCookies,
+    sameSite: useCrossSiteCookies ? "none" : "lax",
+    path: "/",
+    expires: new Date(0),
+    maxAge: 0,
+  };
+
+  // Clear cookie without domain
+  res.clearCookie("token", baseOptions);
+  // Clear cookie with configured domain (if any)
+  if (cookieDomain) {
+    res.clearCookie("token", { ...baseOptions, domain: cookieDomain });
+  }
+
   res.status(200).json({ message: 'Logout successful' });
 };
 
