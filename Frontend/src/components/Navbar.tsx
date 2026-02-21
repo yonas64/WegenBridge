@@ -18,7 +18,9 @@ export default function Navbar() {
     const checkAuth = async () => {
       try {
         const res = await axios.get(apiUrl("/api/auth/me"), {
-          withCredentials: true, // sends cookie automatically
+          withCredentials: true,
+          headers: { "Cache-Control": "no-cache" },
+          params: { t: Date.now() },
         });
         setIsLoggedIn(true);
         setUserRole(res.data?.role || null);
@@ -71,14 +73,21 @@ export default function Navbar() {
   }, [isLoggedIn]);
 
   const handleLogout = async () => {
+    setIsLoggedIn(false);
+    setUserRole(null);
+    setUnreadCount(0);
+    window.dispatchEvent(
+      new CustomEvent("notifications:unreadCount", { detail: { count: 0 } })
+    );
+
     try {
       await axios.post(apiUrl("/api/auth/logout"), {}, {
         withCredentials: true,
       });
-      setIsLoggedIn(false);
-      window.location.href = "/login";
     } catch (err) {
       console.error("Logout failed", err);
+    } finally {
+      window.location.href = "/login";
     }
   };
 

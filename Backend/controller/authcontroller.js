@@ -153,11 +153,24 @@ exports.logout = (req, res) => {
     maxAge: 0,
   };
 
-  // Clear cookie without domain
-  res.clearCookie("token", baseOptions);
-  // Clear cookie with configured domain (if any)
-  if (cookieDomain) {
-    res.clearCookie("token", { ...baseOptions, domain: cookieDomain });
+  const sameSiteVariants = ["none", "lax"];
+  const secureVariants = [true, false];
+  const domainVariants = [undefined, cookieDomain].filter((value, index, arr) => {
+    return arr.indexOf(value) === index;
+  });
+
+  for (const sameSite of sameSiteVariants) {
+    for (const secure of secureVariants) {
+      for (const domain of domainVariants) {
+        const options = {
+          ...baseOptions,
+          sameSite,
+          secure,
+          ...(domain ? { domain } : {}),
+        };
+        res.clearCookie("token", options);
+      }
+    }
   }
 
   res.status(200).json({ message: 'Logout successful' });
