@@ -8,6 +8,7 @@ const { generateToken } = require('../utils/generateToken');
 const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const AUTH_COOKIE_NAMES = ["token", "__Secure-token", "__Host-token"];
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 const isProduction = process.env.NODE_ENV === "production";
 const cookieDomain = process.env.COOKIE_DOMAIN;
@@ -63,9 +64,8 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password, rememberMe } = req.body;
-    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    const user = await User.findOne({ email: normalizedEmail });
+    const user = await User.findOne({ email});
     if (!user) {
       return res.status(400).send('Invalid email or password');
     }
@@ -159,19 +159,24 @@ exports.logout = (req, res) => {
     return arr.indexOf(value) === index;
   });
 
-  for (const sameSite of sameSiteVariants) {
-    for (const secure of secureVariants) {
-      for (const domain of domainVariants) {
-        const options = {
-          ...baseOptions,
-          sameSite,
-          secure,
-          ...(domain ? { domain } : {}),
-        };
-        res.clearCookie("token", options);
+  for (const cookieName of AUTH_COOKIE_NAMES) {
+    for (const sameSite of sameSiteVariants) {
+      for (const secure of secureVariants) {
+        for (const domain of domainVariants) {
+          const options = {
+            ...baseOptions,
+            sameSite,
+            secure,
+            ...(domain ? { domain } : {}),
+          };
+          res.clearCookie(cookieName, options);
+        }
       }
     }
   }
+
+  // Google Identity Services uses this cookie for account auto-select state.
+  res.clearCookie("g_state", { path: "/" });
 
   res.status(200).json({ message: 'Logout successful' });
 };

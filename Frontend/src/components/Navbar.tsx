@@ -80,6 +80,11 @@ export default function Navbar() {
       new CustomEvent("notifications:unreadCount", { detail: { count: 0 } })
     );
 
+    // const google = (window as any).google;
+    // if (google?.accounts?.id?.disableAutoSelect) {
+    //   google.accounts.id.disableAutoSelect();
+    // }
+
     try {
       await axios.post(apiUrl("/api/auth/logout"), {}, {
         withCredentials: true,

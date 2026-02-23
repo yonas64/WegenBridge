@@ -9,7 +9,7 @@ import { apiUrl } from "../utils/api";
 
 export default function Login() {
   const navigate = useNavigate();
-  const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+  const googleClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
   const [showPassword, setShowPassword] = useState(false);
   const googleButtonRef = useRef<HTMLDivElement>(null);
@@ -71,6 +71,7 @@ export default function Login() {
 
       google.accounts.id.initialize({
         client_id: clientId,
+        auto_select: false,
         callback: async (response: any) => {
           try {
             await axios.post(

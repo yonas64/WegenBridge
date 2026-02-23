@@ -20,6 +20,9 @@ export default function MissingPersonsList() {
   const [persons, setPersons] = useState<MissingPerson[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
+  const [hasMore, setHasMore] = useState(false);
   const navigate = useNavigate();
   const [filters, setFilters] = useState({
     q: "",
@@ -38,8 +41,10 @@ export default function MissingPersonsList() {
     Object.entries(filters).forEach(([key, value]) => {
       if (value) params.set(key, value);
     });
+    params.set("page", String(page));
+    params.set("limit", String(pageSize));
     return params.toString();
-  }, [filters]);
+  }, [filters, page]);
 
   const formatDate = (value?: string) => {
     if (!value) return "Unknown";
@@ -72,7 +77,9 @@ export default function MissingPersonsList() {
         }
 
         const data = await res.json();
-        setPersons(data);
+        const list = Array.isArray(data) ? data : [];
+        setPersons(list);
+        setHasMore(list.length === pageSize);
       } catch (err: any) {
         setError(err.message || "Something went wrong");
       } finally {
@@ -82,6 +89,10 @@ export default function MissingPersonsList() {
 
     fetchMissingPersons();
   }, [navigate, queryString]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [filters]);
 
   return (
     <div>
@@ -207,21 +218,43 @@ export default function MissingPersonsList() {
         )}
 
         {!loading && !error && persons.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {persons.map((person) => (
-              <MissingPersonCard
-                key={person._id}
-                id={person._id}
-                name={person.name}
-                age={person.age}
-                location={person.lastSeenLocation}
-                lastSeen={formatDate(person.lastSeenDate)}
-                status={person.status}
-                image={person.photoUrl ? `${apiBaseUrl}${person.photoUrl}` : undefined}
-                relation={person.relationship || "Family Member"}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {persons.map((person) => (
+                <MissingPersonCard
+                  key={person._id}
+                  id={person._id}
+                  name={person.name}
+                  age={person.age}
+                  location={person.lastSeenLocation}
+                  lastSeen={formatDate(person.lastSeenDate)}
+                  status={person.status}
+                  image={person.photoUrl ? `${apiBaseUrl}${person.photoUrl}` : undefined}
+                  relation={person.relationship || "Family Member"}
+                />
+              ))}
+            </div>
+
+            <div className="mt-8 flex items-center justify-center gap-4">
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1 || loading}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-medium text-gray-700">Page {page}</span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => p + 1)}
+                disabled={!hasMore || loading}
+                className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     </div>
