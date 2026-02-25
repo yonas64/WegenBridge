@@ -2,7 +2,13 @@ const mongoose = require('mongoose');
 
 const userSchema = new mongoose.Schema({
     name: String,
-    email: String,
+    email: { 
+        type: String, 
+        required: true, 
+        unique: true,
+        lowercase: true,
+        trim: true 
+    },
     password: String,
     googleId: String,
     profileImage: String,
@@ -11,5 +17,8 @@ const userSchema = new mongoose.Schema({
     resetPasswordToken: String,
     resetPasswordExpires: Date
 }, { timestamps: true });
+
+// Ensure email is indexed for faster queries
+userSchema.index({ email: 1 });
 
 module.exports = mongoose.model('User', userSchema);
