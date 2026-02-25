@@ -8,7 +8,8 @@ const { generateToken } = require('../utils/generateToken');
 const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const AUTH_COOKIE_NAMES = ["token", "__Secure-token", "__Host-token"];
+const AUTH_COOKIE_NAME = "auth_token";
+const AUTH_COOKIE_NAMES = [AUTH_COOKIE_NAME, "token", "__Secure-token", "__Host-token"];
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 const isProduction = process.env.NODE_ENV === "production";
 const cookieDomain = process.env.COOKIE_DOMAIN;
@@ -24,13 +25,40 @@ const buildCookieOptions = (rememberMe) => ({
   maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
 });
 
-const buildClearCookieOptions = () => ({
-  httpOnly: true,
-  secure: secureCookies,
-  sameSite: useCrossSiteCookies ? "none" : "lax",
-  path: "/",
-  ...(cookieDomain ? { domain: cookieDomain } : {}),
-});
+const clearAuthCookies = (res) => {
+  const baseOptions = {
+    httpOnly: true,
+    secure: secureCookies,
+    sameSite: useCrossSiteCookies ? "none" : "lax",
+    path: "/",
+    expires: new Date(0),
+    maxAge: 0,
+  };
+
+  const sameSiteVariants = ["none", "lax"];
+  const secureVariants = [true, false];
+  const domainVariants = [undefined, cookieDomain].filter((value, index, arr) => {
+    return arr.indexOf(value) === index;
+  });
+
+  for (const cookieName of AUTH_COOKIE_NAMES) {
+    for (const sameSite of sameSiteVariants) {
+      for (const secure of secureVariants) {
+        for (const domain of domainVariants) {
+          const options = {
+            ...baseOptions,
+            sameSite,
+            secure,
+            ...(domain ? { domain } : {}),
+          };
+          res.clearCookie(cookieName, options);
+        }
+      }
+    }
+  }
+
+  res.clearCookie("g_state", { path: "/" });
+};
 
 // Register new user
 exports.register = async (req, res) => {
@@ -64,8 +92,9 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password, rememberMe } = req.body;
+    const normalizedEmail = String(email || "").trim().toLowerCase();
 
-    const user = await User.findOne({ email});
+    const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).send('Invalid email or password');
     }
@@ -84,7 +113,8 @@ exports.login = async (req, res) => {
       { expiresIn: rememberMe ? '7d' : '1d' }
     );
 
-    res.cookie("token", token, buildCookieOptions(rememberMe));
+    clearAuthCookies(res);
+    res.cookie(AUTH_COOKIE_NAME, token, buildCookieOptions(rememberMe));
 
     res.status(200).json({ message: 'Login successful' });
   } catch (err) {
@@ -135,7 +165,8 @@ exports.googleLogin = async (req, res) => {
       { expiresIn: rememberMe ? '7d' : '1d' }
     );
 
-    res.cookie("token", token, buildCookieOptions(rememberMe));
+    clearAuthCookies(res);
+    res.cookie(AUTH_COOKIE_NAME, token, buildCookieOptions(rememberMe));
 
     res.status(200).json({ message: 'Google login successful' });
   } catch (err) {
@@ -144,39 +175,7 @@ exports.googleLogin = async (req, res) => {
 };
 
 exports.logout = (req, res) => {
-  const baseOptions = {
-    httpOnly: true,
-    secure: secureCookies,
-    sameSite: useCrossSiteCookies ? "none" : "lax",
-    path: "/",
-    expires: new Date(0),
-    maxAge: 0,
-  };
-
-  const sameSiteVariants = ["none", "lax"];
-  const secureVariants = [true, false];
-  const domainVariants = [undefined, cookieDomain].filter((value, index, arr) => {
-    return arr.indexOf(value) === index;
-  });
-
-  for (const cookieName of AUTH_COOKIE_NAMES) {
-    for (const sameSite of sameSiteVariants) {
-      for (const secure of secureVariants) {
-        for (const domain of domainVariants) {
-          const options = {
-            ...baseOptions,
-            sameSite,
-            secure,
-            ...(domain ? { domain } : {}),
-          };
-          res.clearCookie(cookieName, options);
-        }
-      }
-    }
-  }
-
-  // Google Identity Services uses this cookie for account auto-select state.
-  res.clearCookie("g_state", { path: "/" });
+  clearAuthCookies(res);
 
   res.status(200).json({ message: 'Logout successful' });
 };
@@ -284,7 +283,13 @@ exports.getProfile = async (req, res) => {
 
 // Middleware to protect routes
 exports.protect = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token =
+    req.cookies?.auth_token ||
+    req.cookies?.token ||
+    req.cookies?.["__Secure-token"] ||
+    req.cookies?.["__Host-token"] ||
+    req.headers.authorization?.split(' ')[1];
+
   if (!token) return res.status(401).send('No token, authorization denied');
 
   try {

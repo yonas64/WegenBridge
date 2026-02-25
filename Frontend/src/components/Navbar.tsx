@@ -1,37 +1,18 @@
 import { Link, NavLink } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { 
-  Search, Bell, User, Menu, X, Heart, Home, LayoutDashboard,
+import {
+  Bell, User, Menu, X, Heart, Home, LayoutDashboard,
   Users, AlertCircle, LogIn, UserPlus, Shield, LogOut
 } from "lucide-react";
 import axios from "axios";
 import { apiUrl } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  // ✅ Check login status via backend cookie
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await axios.get(apiUrl("/api/auth/me"), {
-          withCredentials: true,
-          headers: { "Cache-Control": "no-cache" },
-          params: { t: Date.now() },
-        });
-        setIsLoggedIn(true);
-        setUserRole(res.data?.role || null);
-      } catch {
-        setIsLoggedIn(false);
-        setUserRole(null);
-      }
-    };
-
-    checkAuth();
-  }, []);
+  const { user, isLoggedIn, logout } = useAuth();
+  const userRole = user?.role || null;
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -73,27 +54,18 @@ export default function Navbar() {
   }, [isLoggedIn]);
 
   const handleLogout = async () => {
-    setIsLoggedIn(false);
-    setUserRole(null);
     setUnreadCount(0);
     window.dispatchEvent(
       new CustomEvent("notifications:unreadCount", { detail: { count: 0 } })
     );
 
-    // const google = (window as any).google;
-    // if (google?.accounts?.id?.disableAutoSelect) {
-    //   google.accounts.id.disableAutoSelect();
-    // }
-
-    try {
-      await axios.post(apiUrl("/api/auth/logout"), {}, {
-        withCredentials: true,
-      });
-    } catch (err) {
-      console.error("Logout failed", err);
-    } finally {
-      window.location.href = "/login";
+    const google = (window as any).google;
+    if (google?.accounts?.id?.disableAutoSelect) {
+      google.accounts.id.disableAutoSelect();
     }
+
+    await logout();
+    window.location.href = "/login";
   };
 
   const navLinks = [
@@ -110,7 +82,6 @@ export default function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo / Brand */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center group">
               <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 mr-3 group-hover:from-blue-700 group-hover:to-purple-700 transition-all duration-300">
@@ -126,7 +97,6 @@ export default function Navbar() {
             </Link>
           </div>
 
-          {/* Desktop Navigation Links */}
           <div className="hidden lg:flex items-center absolute left-1/2 transform -translate-x-1/2">
             <div className="flex items-center space-x-1 bg-gray-50/80 backdrop-blur-sm rounded-full p-1 border border-gray-200">
               {navLinks.map((link) => (
@@ -148,7 +118,6 @@ export default function Navbar() {
             </div>
           </div>
 
-          {/* Right Side - Auth Buttons */}
           <div className="flex items-center space-x-3">
             {isLoggedIn && (
               <Link
@@ -164,6 +133,7 @@ export default function Navbar() {
                 )}
               </Link>
             )}
+
             <div className="hidden md:flex items-center space-x-2">
               {isLoggedIn ? (
                 <>
@@ -191,7 +161,6 @@ export default function Navbar() {
                     <LogIn className="h-4 w-4 mr-1.5" />
                     Login
                   </Link>
-
                   <Link
                     to="/register"
                     className="flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-sm"
@@ -203,7 +172,6 @@ export default function Navbar() {
               )}
             </div>
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"

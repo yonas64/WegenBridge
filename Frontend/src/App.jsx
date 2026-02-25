@@ -19,6 +19,7 @@ import About from "./pages/About";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import { logError, logPageView } from "./utils/siemLogger";
+import { AuthProvider } from "./context/AuthContext";
 //routes
 
 function RouteLogger() {
@@ -56,26 +57,28 @@ function RouteLogger() {
 
 function App() {
   return (
-    <Router>
-      <RouteLogger />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/register-admin" element={<AdminRegister />} />
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/missing-persons" element={<MissingPersonsList />} />
-        <Route path="/missing-persons/:id" element={<MissingPersonDetail />} />
-        <Route path="/report-missing-person" element={<ReportMissingPerson />} />
-        <Route path="/report-sighting" element={<ReportSighting />} />
-        <Route path="/sightings/:id" element={<SightingDetail />} />
-        <Route path="/profile" element={<Profile />} />
-        <Route path="/notifications" element={<Notifications />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-      </Routes>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <RouteLogger />
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/register-admin" element={<AdminRegister />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/missing-persons" element={<MissingPersonsList />} />
+          <Route path="/missing-persons/:id" element={<MissingPersonDetail />} />
+          <Route path="/report-missing-person" element={<ReportMissingPerson />} />
+          <Route path="/report-sighting" element={<ReportSighting />} />
+          <Route path="/sightings/:id" element={<SightingDetail />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 

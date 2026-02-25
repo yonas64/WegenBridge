@@ -1,14 +1,14 @@
 import Navbar from "../components/Navbar";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
 import { FormEvent } from "react";
 import { Heart, Shield, AlertCircle, Lock, Mail, Eye, EyeOff, UserPlus } from "lucide-react";
 import { logError, logEvent } from "../utils/siemLogger";
-import { apiUrl } from "../utils/api";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login, googleLogin } = useAuth();
   const googleClientId = (import.meta as any).env?.VITE_GOOGLE_CLIENT_ID as string | undefined;
 
   const [showPassword, setShowPassword] = useState(false);
@@ -24,22 +24,12 @@ export default function Login() {
 
     try {
       const email = formData.email.trim().toLowerCase();
-      await axios.post(
-        apiUrl("/api/auth/login"),
-        {
-          email,
-          password: formData.password,
-          rememberMe: formData.rememberMe,
-        },
-        {
-          withCredentials: true,
-        }
-      );
-
-      const meRes = await axios.get(apiUrl("/api/auth/me"), {
-        withCredentials: true,
+      const me = await login({
+        email,
+        password: formData.password,
+        rememberMe: formData.rememberMe,
       });
-      const role = meRes?.data?.role;
+      const role = me?.role;
 
       logEvent("auth_login_success", undefined, { email, role });
       navigate(role === "admin" ? "/dashboard" : "/");
@@ -74,14 +64,7 @@ export default function Login() {
         auto_select: false,
         callback: async (response: any) => {
           try {
-            await axios.post(
-              apiUrl("/api/auth/google"),
-              {
-                idToken: response.credential,
-                rememberMe: formData.rememberMe,
-              },
-              { withCredentials: true }
-            );
+            await googleLogin(response.credential, formData.rememberMe);
             logEvent("auth_google_login_success");
             navigate("/");
           } catch (error: any) {
