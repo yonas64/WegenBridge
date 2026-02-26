@@ -39,6 +39,7 @@ export default function MissingPersonDetail() {
   const [person, setPerson] = useState<MissingPerson | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
   const navigate = useNavigate();
   useEffect(() => {
     if (!id) return;
@@ -98,6 +99,186 @@ export default function MissingPersonDetail() {
     return Number.isNaN(date.getTime()) ? "Unknown" : date.toLocaleDateString();
   };
 
+  const getPhotoSrc = (photoUrl?: string) => {
+    if (!photoUrl) return "";
+    if (/^https?:\/\//i.test(photoUrl)) return photoUrl;
+    return `${apiBaseUrl}${photoUrl}`;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(text);
+      return;
+    }
+
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    document.execCommand("copy");
+    document.body.removeChild(textArea);
+  };
+
+  const handleShareInfo = async () => {
+    if (!person) return;
+
+    const shareText = [
+      `Missing Person: ${person.name}`,
+      person.age !== undefined ? `Age: ${person.age}` : "",
+      person.gender ? `Gender: ${person.gender}` : "",
+      `Last Seen Date: ${formatDate(person.lastSeenDate)}`,
+      person.lastSeenLocation ? `Last Seen Location: ${person.lastSeenLocation}` : "",
+      person.description ? `Description: ${person.description}` : "",
+      person.contactPhone ? `Contact Phone: ${person.contactPhone}` : "",
+      person.contactEmail ? `Contact Email: ${person.contactEmail}` : "",
+      `Case Link: ${window.location.href}`,
+    ]
+      .filter(Boolean)
+      .join("\n");
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Missing Person: ${person.name}`,
+          text: shareText,
+          url: window.location.href,
+        });
+      } else {
+        await copyToClipboard(shareText);
+        setActionMessage("Case information copied to clipboard.");
+      }
+    } catch {
+      await copyToClipboard(shareText);
+      setActionMessage("Case information copied to clipboard.");
+    }
+  };
+
+  const handleDownloadPoster = async () => {
+    if (!person) return;
+
+    try {
+      const width = 1200;
+      const height = 1600;
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to create poster");
+
+      const gradient = ctx.createLinearGradient(0, 0, width, height);
+      gradient.addColorStop(0, "#eff6ff");
+      gradient.addColorStop(1, "#fdf2f8");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.fillStyle = "#1d4ed8";
+      ctx.font = "bold 86px Arial";
+      ctx.fillText("MISSING PERSON", 80, 130);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 72px Arial";
+      ctx.fillText(person.name, 80, 230);
+
+      const photoSrc = getPhotoSrc(person.photoUrl);
+      if (photoSrc) {
+        try {
+          const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.onload = () => resolve(img);
+            img.onerror = () => reject(new Error("image"));
+            img.src = photoSrc;
+          });
+          ctx.drawImage(image, 80, 280, 520, 520);
+        } catch {
+          ctx.fillStyle = "#d1d5db";
+          ctx.fillRect(80, 280, 520, 520);
+        }
+      } else {
+        ctx.fillStyle = "#d1d5db";
+        ctx.fillRect(80, 280, 520, 520);
+      }
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 42px Arial";
+      const infoX = 650;
+      let infoY = 330;
+
+      const lines = [
+        person.age !== undefined ? `Age: ${person.age}` : "Age: Unknown",
+        `Gender: ${person.gender || "Unknown"}`,
+        `Last Seen: ${formatDate(person.lastSeenDate)}`,
+        `Location: ${person.lastSeenLocation || "Unknown"}`,
+        person.lastSeenTime ? `Time: ${person.lastSeenTime}` : "",
+      ].filter(Boolean);
+
+      for (const line of lines) {
+        ctx.fillText(line, infoX, infoY);
+        infoY += 62;
+      }
+
+      ctx.font = "bold 48px Arial";
+      ctx.fillStyle = "#dc2626";
+      ctx.fillText("IF SEEN, CONTACT IMMEDIATELY", 80, 920);
+
+      ctx.fillStyle = "#111827";
+      ctx.font = "bold 40px Arial";
+      if (person.contactName) {
+        ctx.fillText(`Contact: ${person.contactName}`, 80, 1000);
+      }
+      if (person.contactPhone) {
+        ctx.fillText(`Phone: ${person.contactPhone}`, 80, 1060);
+      }
+      if (person.contactEmail) {
+        ctx.fillText(`Email: ${person.contactEmail}`, 80, 1120);
+      }
+
+      if (person.description) {
+        ctx.fillStyle = "#374151";
+        ctx.font = "32px Arial";
+        const text = `Description: ${person.description}`;
+        const maxWidth = width - 160;
+        const words = text.split(" ");
+        let line = "";
+        let y = 1220;
+        const lineHeight = 42;
+        for (const word of words) {
+          const testLine = `${line}${word} `;
+          if (ctx.measureText(testLine).width > maxWidth) {
+            ctx.fillText(line, 80, y);
+            line = `${word} `;
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) ctx.fillText(line, 80, y);
+      }
+
+      ctx.fillStyle = "#6b7280";
+      ctx.font = "26px Arial";
+      ctx.fillText(`Case ID: ${person._id}`, 80, 1520);
+      ctx.fillText(`Generated: ${new Date().toLocaleString()}`, 80, 1560);
+
+      const blob = await new Promise<Blob | null>((resolve) =>
+        canvas.toBlob((b) => resolve(b), "image/png")
+      );
+      if (!blob) throw new Error("Failed to build poster file");
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${person.name.replace(/\s+/g, "_")}_missing_poster.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setActionMessage("Poster downloaded successfully.");
+    } catch {
+      setActionMessage("Failed to download poster.");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       <Navbar />
@@ -113,6 +294,11 @@ export default function MissingPersonDetail() {
 
         {loading && <div className="text-gray-600">Loading person details...</div>}
         {!loading && error && <div className="text-red-600">{error}</div>}
+        {!!actionMessage && !loading && !error && (
+          <div className="mb-4 text-sm text-blue-700 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+            {actionMessage}
+          </div>
+        )}
 
         {!loading && !error && person && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -142,7 +328,10 @@ export default function MissingPersonDetail() {
                       <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
                         <Heart className="h-5 w-5 text-gray-400 hover:text-red-500" />
                       </button>
-                      <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                      <button
+                        onClick={handleShareInfo}
+                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      >
                         <Share2 className="h-5 w-5 text-gray-400 hover:text-blue-500" />
                       </button>
                     </div>
@@ -157,7 +346,7 @@ export default function MissingPersonDetail() {
                         <img
                           src={
                             person.photoUrl
-                              ? `${apiBaseUrl}${person.photoUrl}`
+                              ? getPhotoSrc(person.photoUrl)
                               : "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=400&h=400&fit=crop&crop=face"
                           }
                           alt={person.name}
@@ -288,11 +477,17 @@ export default function MissingPersonDetail() {
                           >
                             Report Sighting
                           </Link>
-                          <button className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                          <button
+                            onClick={handleDownloadPoster}
+                            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                          >
                             Download Poster
                           </button>
-                          <button className="flex-1 bg-white text-blue-600 border border-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all duration-300">
-                            Share Information
+                          <button
+                            onClick={handleShareInfo}
+                            className="flex-1 bg-white text-blue-600 border border-blue-600 px-6 py-3 rounded-xl font-semibold hover:bg-blue-50 transition-all duration-300"
+                          >
+                            Copy Information
                           </button>
                         </div>
                       </div>
