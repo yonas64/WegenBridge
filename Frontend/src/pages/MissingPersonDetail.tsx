@@ -319,10 +319,6 @@ export default function MissingPersonDetail() {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center text-gray-600 mb-1">
-                        <AlertCircle className="h-4 w-4 mr-2" />
-                        <span>Case ID: {person._id}</span>
-                      </div>
                     </div>
                     <div className="flex space-x-2 mt-2 sm:mt-0">
                       <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">

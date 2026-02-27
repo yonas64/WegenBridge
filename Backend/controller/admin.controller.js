@@ -70,3 +70,81 @@ exports.getDashboard = async (req, res) => {
     res.status(500).json({ message: "Error fetching dashboard data", error });
   }
 };
+
+exports.getUsers = async (req, res) => {
+  try {
+    const users = await User.find({})
+      .sort({ createdAt: -1 })
+      .select("_id name email role isFrozen createdAt");
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching users", error: error.message });
+  }
+};
+
+exports.setUserFrozen = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { isFrozen } = req.body;
+
+    if (typeof isFrozen !== "boolean") {
+      return res.status(400).json({ message: "isFrozen must be boolean" });
+    }
+
+    if (String(req.user._id) === String(id)) {
+      return res.status(400).json({ message: "You cannot freeze your own account" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).json({ message: "Cannot freeze an admin account" });
+    }
+
+    user.isFrozen = isFrozen;
+    user.frozenAt = isFrozen ? new Date() : null;
+    await user.save();
+
+    return res.status(200).json({
+      message: isFrozen ? "User frozen successfully" : "User unfrozen successfully",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isFrozen: user.isFrozen,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Error updating user freeze state", error: error.message });
+  }
+};
+
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (String(req.user._id) === String(id)) {
+      return res.status(400).json({ message: "You cannot delete your own account" });
+    }
+
+    const user = await User.findById(id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).json({ message: "Cannot delete an admin account" });
+    }
+
+    await User.findByIdAndDelete(id);
+
+    return res.status(200).json({ message: "User removed successfully" });
+  } catch (error) {
+    return res.status(500).json({ message: "Error removing user", error: error.message });
+  }
+};

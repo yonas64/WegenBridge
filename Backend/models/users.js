@@ -14,6 +14,8 @@ const userSchema = new mongoose.Schema({
     profileImage: String,
     age: Number,
     role: { type: String, enum: ["user", "admin"], default: "user" },
+    isFrozen: { type: Boolean, default: false },
+    frozenAt: Date,
     resetPasswordToken: String,
     resetPasswordExpires: Date
 }, { timestamps: true });

@@ -79,7 +79,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm">
+    <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 shadow-sm relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
@@ -122,7 +122,7 @@ export default function Navbar() {
             {isLoggedIn && (
               <Link
                 to="/notifications"
-                className="relative hidden md:inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="relative hidden lg:inline-flex items-center justify-center p-2 rounded-lg hover:bg-gray-100 transition-colors"
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5 text-gray-700" />
@@ -134,7 +134,7 @@ export default function Navbar() {
               </Link>
             )}
 
-            <div className="hidden md:flex items-center space-x-2">
+            <div className="hidden lg:flex items-center space-x-2">
               {isLoggedIn ? (
                 <>
                   <Link
@@ -174,7 +174,7 @@ export default function Navbar() {
 
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 transition-colors"
             >
               {isMenuOpen ? <X className="h-6 w-6 text-gray-700" /> : <Menu className="h-6 w-6 text-gray-700" />}
             </button>
@@ -183,8 +183,44 @@ export default function Navbar() {
       </div>
 
       {isMenuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white">
-          <div className="px-4 py-3 space-y-2">
+        <div className="lg:hidden absolute right-4 top-[68px] w-[min(22rem,calc(100vw-2rem))] bg-white border border-gray-100 rounded-xl shadow-xl">
+          <div className="px-3 py-3 space-y-2">
+            {navLinks.map((link) => (
+              <NavLink
+                key={link.to}
+                to={link.to}
+                onClick={() => setIsMenuOpen(false)}
+                className={({ isActive }) =>
+                  `flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700 hover:bg-gray-50"
+                  }`
+                }
+              >
+                <span className="mr-2">{link.icon}</span>
+                {link.label}
+              </NavLink>
+            ))}
+
+            {isLoggedIn && (
+              <Link
+                to="/notifications"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
+                {unreadCount > 0 && (
+                  <span className="ml-2 min-w-[18px] h-[18px] px-1 rounded-full bg-red-600 text-white text-[10px] font-semibold flex items-center justify-center">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            <div className="border-t border-gray-100 my-2" />
+
             {isLoggedIn ? (
               <>
                 <Link

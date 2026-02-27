@@ -101,6 +101,9 @@ exports.login = async (req, res) => {
     if (!user.password) {
       return res.status(400).send('Please sign in with Google');
     }
+    if (user.isFrozen) {
+      return res.status(403).json({ message: 'Your account has been frozen. Contact support.' });
+    }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
@@ -157,6 +160,9 @@ exports.googleLogin = async (req, res) => {
         user.profileImage = payload.picture;
       }
       await user.save();
+    }
+    if (user.isFrozen) {
+      return res.status(403).json({ message: 'Your account has been frozen. Contact support.' });
     }
 
     const token = jwt.sign(

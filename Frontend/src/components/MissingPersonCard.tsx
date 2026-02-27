@@ -59,9 +59,6 @@ export default function MissingPersonCard(props: MissingPersonCardProps) {
             className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-xl group-hover:scale-105 transition-transform duration-300"
           />
         </div>
-        <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-white px-3 py-1 rounded-full shadow-md border">
-          <span className="text-xs font-semibold text-gray-700">#{id.toString().padStart(4, '0')}</span>
-        </div>
       </div>
 
       {/* Name and Relation */}
@@ -115,9 +112,9 @@ export default function MissingPersonCard(props: MissingPersonCardProps) {
         >
           View Full Details
         </Link>
-        <button className="p-3 bg-gray-100 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors duration-300 border border-gray-200 hover:border-blue-300">
-          <Share2 className="w-5 h-5" />
-        </button>
+        {/* <button className="p-3 bg-gray-100 hover:bg-blue-100 text-blue-600 rounded-xl transition-colors duration-300 border border-gray-200 hover:border-blue-300">
+         <Share2 className="w-5 h-5" />
+        </button> */}
       </div>
 
       {/* Additional Info */}

@@ -249,6 +249,15 @@ export default function Dashboard() {
                       </Link>
                     ))}
                   </div>
+                  <div className="mt-6">
+                    <Link
+                      to="/admin/users"
+                      className="inline-flex items-center px-4 py-2 rounded-lg border border-blue-200 text-blue-700 hover:bg-blue-50 transition-colors"
+                    >
+                      <Users className="h-4 w-4 mr-2" />
+                      Manage Users
+                    </Link>
+                  </div>
                 </div>
 
                 <div className="rounded-2xl bg-white p-6 shadow-sm border border-gray-100">

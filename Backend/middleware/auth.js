@@ -24,6 +24,9 @@ const authMiddleware = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: "Unauthorized: Invalid token" });
     }
+    if (user.isFrozen) {
+      return res.status(403).json({ message: "Account is frozen" });
+    }
 
     req.user = user;
     next();
