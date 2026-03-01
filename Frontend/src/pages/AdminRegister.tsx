@@ -17,6 +17,7 @@ export default function AdminRegister() {
     email: "",
     password: "",
     confirmPassword: "",
+    adminCode: "",
   });
 
   const handleChange = (e: any) => {
@@ -41,6 +42,7 @@ export default function AdminRegister() {
           email: formData.email,
           password: formData.password,
           role: "admin",
+          adminCode: formData.adminCode,
         },
         { withCredentials: true }
       );
@@ -107,6 +109,24 @@ export default function AdminRegister() {
                   required
                 />
                 <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Admin Invite Code
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  name="adminCode"
+                  value={formData.adminCode}
+                  onChange={handleChange}
+                  className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                  placeholder="Enter admin code"
+                  required
+                />
+                <Shield className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
               </div>
             </div>
 

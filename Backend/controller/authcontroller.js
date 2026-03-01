@@ -8,6 +8,7 @@ const { generateToken } = require('../utils/generateToken');
 const JWT_SECRET = process.env.JWT_SECRET;
 const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const ADMIN_REGISTRATION_SECRET = process.env.ADMIN_REGISTRATION_SECRET;
 const AUTH_COOKIE_NAME = "auth_token";
 const AUTH_COOKIE_NAMES = [AUTH_COOKIE_NAME, "token", "__Secure-token", "__Host-token"];
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
@@ -63,14 +64,23 @@ const clearAuthCookies = (res) => {
 // Register new user
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role, adminCode } = req.body;
     const normalizedEmail = String(email || '').trim().toLowerCase();
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) return res.status(400).send('User already exists');
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const resolvedRole = role === 'admin' ? 'admin' : 'user';
+    let resolvedRole = 'user';
+    if (role === 'admin') {
+      if (!ADMIN_REGISTRATION_SECRET) {
+        return res.status(403).json({ message: 'Admin registration is disabled' });
+      }
+      if (adminCode !== ADMIN_REGISTRATION_SECRET) {
+        return res.status(403).json({ message: 'Invalid admin registration code' });
+      }
+      resolvedRole = 'admin';
+    }
     const profileImage = req.file ? `/uploads/${req.file.filename}` : undefined;
 
     const user = new User({

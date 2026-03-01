@@ -285,15 +285,6 @@ const handleChange = (e: any) => {
                     Sign up for free
                   </Link>
                 </p>
-                <p className="text-gray-600 mt-2">
-                  Need admin access?{" "}
-                  <Link
-                    to="/register-admin"
-                    className="text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    Register as admin
-                  </Link>
-                </p>
               </div>
             </div>
 

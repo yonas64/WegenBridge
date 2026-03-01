@@ -380,15 +380,6 @@ export default function Register() {
                     Sign in here
                   </Link>
                 </p>
-                <p className="mt-2 text-gray-600">
-                  Need admin access?{" "}
-                  <Link
-                    to="/register-admin"
-                    className="text-blue-600 hover:text-blue-700 font-semibold"
-                  >
-                    Register as admin
-                  </Link>
-                </p>
               </div>
             </div>
 
