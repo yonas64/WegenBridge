@@ -19,8 +19,8 @@ const secureCookies = process.env.COOKIE_SECURE === "true" || useCrossSiteCookie
 
 const buildCookieOptions = (rememberMe) => ({
   httpOnly: true,
-  secure: secureCookies,
-  sameSite: useCrossSiteCookies ? "none" : "lax",
+  secure: false, // Always false for local development
+  sameSite: "lax", // Always lax for local development
   path: "/",
   ...(cookieDomain ? { domain: cookieDomain } : {}),
   maxAge: rememberMe ? 7 * 24 * 60 * 60 * 1000 : 24 * 60 * 60 * 1000,
